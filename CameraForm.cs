@@ -19,5 +19,10 @@ namespace JH_VisionProject
         {
             InitializeComponent();
         }
+
+        private void CameraForm_Load(object sender, EventArgs e)
+        {
+
+        }
     }
 }

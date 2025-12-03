@@ -91,6 +91,15 @@
     <Compile Include="StatisticForm.Designer.cs">
       <DependentUpon>StatisticForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="UIControl\ImageViewCtrl.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="UIControl\ImageViewCtrl.Designer.cs">
+      <DependentUpon>ImageViewCtrl.cs</DependentUpon>
+    </Compile>
+    <EmbeddedResource Include="CameraForm.resx">
+      <DependentUpon>CameraForm.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="LogForm.resx">
       <DependentUpon>LogForm.cs</DependentUpon>
     </EmbeddedResource>
@@ -114,6 +123,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="StatisticForm.resx">
       <DependentUpon>StatisticForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UIControl\ImageViewCtrl.resx">
+      <DependentUpon>ImageViewCtrl.cs</DependentUpon>
     </EmbeddedResource>
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
