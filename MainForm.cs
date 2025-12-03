@@ -14,6 +14,7 @@ namespace JH_VisionProject
     public partial class MainForm : Form
     {
         private static DockPanel _dockPanel;    // 도킹패널 멤버변수 선언
+        int i = 0;
         public MainForm()
         {
             InitializeComponent();
