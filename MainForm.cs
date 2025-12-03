@@ -58,7 +58,12 @@ namespace JH_VisionProject
             var logForm = new LogForm();
             logForm.Show(propForm.Pane, DockAlignment.Bottom, 0.35);
 
-
+        }
+        //제네릭 함수 사용을 이용해 입력된 타입의 폼 객체 얻기
+        public static T GetDockContent<T>() where T : DockContent 
+        {
+            var findForm = _dockPanel.Contents.OfType<T>().FirstOrDefault();    
+            return findForm;
         }
     }
 }
