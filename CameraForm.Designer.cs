@@ -38,6 +38,7 @@
             this.imageViewer.Name = "imageViewer";
             this.imageViewer.Size = new System.Drawing.Size(800, 450);
             this.imageViewer.TabIndex = 0;
+            this.imageViewer.Load += new System.EventHandler(this.imageViewer_Load);
             // 
             // CameraForm
             // 
@@ -48,6 +49,7 @@
             this.Name = "CameraForm";
             this.Text = "CameraForm";
             this.Load += new System.EventHandler(this.CameraForm_Load);
+            this.Resize += new System.EventHandler(this.CameraForm_Resize);
             this.ResumeLayout(false);
 
         }

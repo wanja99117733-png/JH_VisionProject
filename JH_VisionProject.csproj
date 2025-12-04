@@ -79,6 +79,18 @@
       <DependentUpon>PropertiesForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Property\BinaryProp.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Property\BinaryProp.Designer.cs">
+      <DependentUpon>BinaryProp.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Property\ImageFilterProp.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Property\ImageFilterProp.Designer.cs">
+      <DependentUpon>ImageFilterProp.cs</DependentUpon>
+    </Compile>
     <Compile Include="ResultForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -118,6 +130,12 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <EmbeddedResource Include="Property\BinaryProp.resx">
+      <DependentUpon>BinaryProp.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Property\ImageFilterProp.resx">
+      <DependentUpon>ImageFilterProp.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="ResultForm.resx">
       <DependentUpon>ResultForm.cs</DependentUpon>
     </EmbeddedResource>

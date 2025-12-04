@@ -7,17 +7,79 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using JH_VisionProject.Property;
 using WeifenLuo.WinFormsUI.Docking;
 
 namespace JH_VisionProject
 {
+    public enum PropertyType
+    {
+        Binary,
+        Filter
+    }
+
     public partial class PropertiesForm : DockContent
     {
+        Dictionary<string, TabPage> _allTabs = new Dictionary<string, TabPage>();
+
         public PropertiesForm()
         {
             InitializeComponent();
+
+            LoadOptionControl(PropertyType.Filter);
+            LoadOptionControl(PropertyType.Binary);
         }
 
+        private void LoadOptionControl(PropertyType propType)
+        {
+            string tabName = propType.ToString();
+
+            foreach (TabPage tabPage in tabPropControl.TabPages)
+            {
+                if (tabPage.Text == tabName)
+                    return;
+            }
+            if (_allTabs.TryGetValue(tabName, out TabPage page))
+            {
+                tabPropControl.TabPages.Add(page);
+                return;
+            }
+            UserControl _propType = CreateUserControl((PropertyType)propType);
+            if (_propType == null)
+                return;
+
+            // 새 탭 추가
+            TabPage newTab = new TabPage(tabName)
+            {
+                Dock = DockStyle.Fill
+            };
+            _propType.Dock = DockStyle.Fill;
+            newTab.Controls.Add(_propType);
+            tabPropControl.TabPages.Add(newTab);
+            tabPropControl.SelectedTab = newTab; // 새 탭 선택
+
+            _allTabs[tabName] = newTab;
+        }
+
+        private UserControl CreateUserControl(PropertyType propType)
+        {
+            UserControl curProp = null;
+            switch (propType)
+            {
+                case PropertyType.Binary:
+                    BinaryProp blobProp = new BinaryProp();
+                    curProp = blobProp;
+                    break;
+                case PropertyType.Filter:
+                    ImageFilterProp filterProp = new ImageFilterProp();
+                    curProp = filterProp;
+                    break;
+                default:
+                    MessageBox.Show("유효하지 않은 옵션입니다.");
+                    return null;
+            }
+            return curProp;
+        }
         private void PropertiesForm_Load(object sender, EventArgs e)
         {
 

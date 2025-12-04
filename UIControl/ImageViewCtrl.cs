@@ -141,7 +141,7 @@ namespace JH_VisionProject.UIControl
             {
                 using (Graphics g = Graphics.FromImage(Canvas))
                 {
-                    g.Clear(Color.Black); // 배경 투명하게 설정
+                    g.Clear(Color.BlueViolet); // 배경 투명하게 설정
 
                     g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
                     //이미지 확대 or 축소때 화질 최적화 방식(Interplation Mode) 설정

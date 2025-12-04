@@ -49,5 +49,14 @@ namespace JH_VisionProject
             return curImage;
         }
 
+        private void imageViewer_Load(object sender, EventArgs e)
+        {
+
+        }
+
+        private void CameraForm_Resize(object sender, EventArgs e)
+        {
+
+        }
     }
 }
