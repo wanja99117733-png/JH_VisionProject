@@ -35,6 +35,8 @@ namespace JH_VisionProject.UIControl
         {
             InitializeComponent();
             IntilaizeCanvas();
+
+            MouseWheel += new MouseEventHandler(ImageViewCCtrl_MouseWheel);
         }
 
         public void LoadBitmap(Bitmap bitmap)
@@ -64,7 +66,7 @@ namespace JH_VisionProject.UIControl
                 ResizeCanvas();
             }
 
-            FitImageToScrean();
+            FitToImageToScrean();
         }
         private void ResizeCanvas() // 캔버스 크기 재설정
         {
@@ -73,7 +75,7 @@ namespace JH_VisionProject.UIControl
 
             Canvas = new Bitmap(Width, Height);
             // 캔버스 비트맵 생성
-            if (Canvas == null) 
+            if (Canvas == null)
                 return;
 
             float virtualWidth = _bitmapImage.Width * _curZoom;                             //가상 이미지의 가로 크기
@@ -85,7 +87,7 @@ namespace JH_VisionProject.UIControl
             ImageRect = new RectangleF(offsetX, offsetY, virtualWidth, virtualHeight);      //이미지 렉트 설정
         }
 
-        private void FitImageToScrean()     // 화면에 이미지 맞추기
+        private void FitToImageToScrean()     // 화면에 이미지 맞추기
         {
             RecalcZoomRatio();
 
@@ -93,9 +95,9 @@ namespace JH_VisionProject.UIControl
             float NewHeight = _bitmapImage.Height * _curZoom;
 
             ImageRect = new RectangleF(
-                (Width - NewWidth) / 2, 
+                (Width - NewWidth) / 2,
                 (Height - NewHeight) / 2,
-                NewWidth, 
+                NewWidth,
                 NewHeight);
 
             Invalidate();
@@ -103,7 +105,7 @@ namespace JH_VisionProject.UIControl
 
         private void RecalcZoomRatio() // 배율 재계산
         {
-            if(_bitmapImage == null || Width <= 0 || Height <= 0)   //이미지가 없거나 컨트롤 크기가 0이하일때
+            if (_bitmapImage == null || Width <= 0 || Height <= 0)   //이미지가 없거나 컨트롤 크기가 0이하일때
                 return;
 
             Size imageSize = new Size(_bitmapImage.Width, _bitmapImage.Height);
@@ -128,7 +130,7 @@ namespace JH_VisionProject.UIControl
 
             _curZoom = Math.Max(MinZoom, Math.Min(MaxZoom, ratio));
 
-            Invalidate();   
+            Invalidate();
         }
 
         protected override void OnPaint(PaintEventArgs e)
@@ -160,7 +162,70 @@ namespace JH_VisionProject.UIControl
 
             DoubleBuffered = true;
         }
+        private PointF GetScreenOffset()
+        {
+            return new PointF(ImageRect.X, ImageRect.Y);
+        }
 
+        private PointF ScreenToVirtual(PointF screenPos)
+        {
+            PointF offset = GetScreenOffset();
+            return new PointF(
+                (screenPos.X - offset.X) / _curZoom,
+                (screenPos.Y - offset.Y) / _curZoom);
+        }
+        private PointF VirtualToScreen(PointF virtualPos)
+        {
+            PointF offset = GetScreenOffset();
+            return new PointF(
+                virtualPos.X * _curZoom + offset.X,
+                virtualPos.Y * _curZoom + offset.Y);
+        }
+        private void ZoomMove(float zoom, Point zoomOrigin)
+        {
+            PointF virtualOrigin = ScreenToVirtual(new PointF(zoomOrigin.X, zoomOrigin.Y));
+
+            _curZoom = Math.Max(MinZoom, Math.Min(MaxZoom, zoom));
+            if (_curZoom <= MinZoom)
+                return;
+
+            PointF zoomedOrigin = VirtualToScreen(virtualOrigin);
+
+            float dx = zoomedOrigin.X - zoomOrigin.X;
+            float dy = zoomedOrigin.Y - zoomOrigin.Y;
+
+            ImageRect.X -= dx;
+            ImageRect.Y -= dy;
+        }
+        private void ImageViewCCtrl_MouseWheel(object sender, MouseEventArgs e)
+        {
+            if (e.Delta < 0)
+                ZoomMove(_curZoom / _zoomFactor, e.Location);
+            else
+                ZoomMove(_curZoom * _zoomFactor, e.Location);
+
+            if (_bitmapImage != null)
+            {
+                ImageRect.Width = _bitmapImage.Width * _curZoom;
+                ImageRect.Height = _bitmapImage.Height * _curZoom;
+            }
+
+            // 다시 그리기 요청
+            Invalidate();
+        }
+
+ 
         
+
+        private void ImageViewCtrl_MouseDoubleClick_1(object sender, MouseEventArgs e)
+        {
+            FitToImageToScrean();
+        }
+
+        private void ImageViewCtrl_Resize_1(object sender, EventArgs e)
+        {
+            ResizeCanvas();
+            Invalidate();
+        }
     }
 }
