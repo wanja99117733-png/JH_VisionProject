@@ -33,7 +33,7 @@ namespace JH_VisionProject
         private void LoadOptionControl(PropertyType propType)
         {
             string tabName = propType.ToString();
-
+    
             foreach (TabPage tabPage in tabPropControl.TabPages)
             {
                 if (tabPage.Text == tabName)
