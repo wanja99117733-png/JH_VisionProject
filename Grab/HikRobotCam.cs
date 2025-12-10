@@ -199,6 +199,14 @@ namespace JH_VisionProject.Grab
             _userImageBuffer = new GrabUserBuffer[bufferCount];
             return true;
         }
+        internal bool SetBuffer(byte[] buffer, IntPtr bufferPtr, GCHandle bufferHandle, int bufferIndex = 0)
+        {
+            _userImageBuffer[bufferIndex].ImageBuffer = buffer;
+            _userImageBuffer[bufferIndex].ImageBufferPtr = bufferPtr;
+            _userImageBuffer[bufferIndex].ImageHandle = bufferHandle;
+
+            return true;
+        }
 
         internal bool Grab(int bufferIndex, bool waitDone)
         {
