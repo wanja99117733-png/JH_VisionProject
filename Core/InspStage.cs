@@ -7,6 +7,7 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using JH_VisionProject.Inspect;
 
 namespace JH_VisionProject.Core
 {
@@ -27,7 +28,7 @@ namespace JH_VisionProject.Core
 
         private ImageSpace _imageSpace = null;
         private HikRobotCam _grabManager = null;
-        SaigeAI _saigeAI; // SaigeAI 인스턴스
+        SaigeAI _saigeAI = null;
 
         public InspStage() { }
         public ImageSpace ImageSpace
@@ -173,6 +174,7 @@ namespace JH_VisionProject.Core
             {
                 if (disposing)
                 {
+                    
                     // Dispose managed resources.
                     if (_saigeAI != null)
                     {

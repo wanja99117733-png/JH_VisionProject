@@ -39,6 +39,7 @@
             this.tabPropControl.SelectedIndex = 0;
             this.tabPropControl.Size = new System.Drawing.Size(800, 450);
             this.tabPropControl.TabIndex = 0;
+            this.tabPropControl.SelectedIndexChanged += new System.EventHandler(this.tabPropControl_SelectedIndexChanged);
             // 
             // PropertiesForm
             // 

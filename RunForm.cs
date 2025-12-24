@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using JH_VisionProject.Core;
+using WeifenLuo.WinFormsUI.Docking;
 
 namespace JH_VisionProject
 {

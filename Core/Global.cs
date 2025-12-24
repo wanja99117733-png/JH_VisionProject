@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using SaigeVision.Net.V2;
+
 
 namespace JH_VisionProject.Core
 {

@@ -16,10 +16,14 @@ namespace JH_VisionProject
 
     public partial class CameraForm : DockContent
     {
+        private string _currentImagePath;
+        private Bitmap _currentBitmap;
         public CameraForm()
         {
             InitializeComponent();
         }
+        public string CurrentImagePath => _currentImagePath;
+        public Bitmap CurrentBitmap => _currentBitmap;
 
         private void CameraForm_Load(object sender, EventArgs e)
         {
@@ -29,6 +33,13 @@ namespace JH_VisionProject
         {
             if (imageViewer != null)
                 imageViewer.LoadBitmap(bitmap);
+           
+            if (bitmap != null)
+            {
+                _currentBitmap?.Dispose();
+                _currentBitmap = (Bitmap)bitmap.Clone();
+                _currentImagePath = null; // 파일 경로는 모름
+            }
         }
         public void LoadImage(string filename)
         {
@@ -37,6 +48,11 @@ namespace JH_VisionProject
 
             Image bitmap = Image.FromFile(filename);
             imageViewer.LoadBitmap((Bitmap)bitmap);
+
+            _currentImagePath = filename;
+
+            _currentBitmap?.Dispose();
+            _currentBitmap = (Bitmap)bitmap.Clone();
         }
 
         public Bitmap GetDisplayImage()

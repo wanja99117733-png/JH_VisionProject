@@ -93,5 +93,10 @@ namespace JH_VisionProject
                 }
             }
         }
+
+        private void MainForm_Load(object sender, EventArgs e)
+        {
+
+        }
     }
 }

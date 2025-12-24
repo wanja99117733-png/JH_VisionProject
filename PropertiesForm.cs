@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using JH_VisionProject.Inspect;
 using JH_VisionProject.Property;
 using WeifenLuo.WinFormsUI.Docking;
 
@@ -15,7 +16,8 @@ namespace JH_VisionProject
     public enum PropertyType
     {
         Binary,
-        Filter
+        Filter,
+        AIModel
     }
 
     public partial class PropertiesForm : DockContent
@@ -28,6 +30,8 @@ namespace JH_VisionProject
 
             LoadOptionControl(PropertyType.Filter);
             LoadOptionControl(PropertyType.Binary);
+            LoadOptionControl(PropertyType.AIModel);
+
         }
 
         private void LoadOptionControl(PropertyType propType)
@@ -74,6 +78,10 @@ namespace JH_VisionProject
                     ImageFilterProp filterProp = new ImageFilterProp();
                     curProp = filterProp;
                     break;
+                case PropertyType.AIModel:
+                    AImodelProp aiModelProp = new AImodelProp();
+                    curProp = aiModelProp;
+                    break;
                 default:
                     MessageBox.Show("유효하지 않은 옵션입니다.");
                     return null;
@@ -81,6 +89,11 @@ namespace JH_VisionProject
             return curProp;
         }
         private void PropertiesForm_Load(object sender, EventArgs e)
+        {
+
+        }
+
+        private void tabPropControl_SelectedIndexChanged(object sender, EventArgs e)
         {
 
         }
