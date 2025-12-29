@@ -165,16 +165,7 @@ namespace JH_VisionProject.Grab
             return ret;
         }
 
-        internal override bool Close()
-        {
-            if (_device != null)
-            {
-                _device.StreamGrabber.StopGrabbing();
-                _device.Close();
-            }
-
-            return true;
-        }
+        
         internal override bool Open()
         {
             try
@@ -245,6 +236,16 @@ namespace JH_VisionProject.Grab
                 Console.WriteLine(ex.ToString());
                 return false;
             }
+            return true;
+        }
+        internal override bool Close()
+        {
+            if (_device != null)
+            {
+                _device.StreamGrabber.StopGrabbing();
+                _device.Close();
+            }
+
             return true;
         }
 

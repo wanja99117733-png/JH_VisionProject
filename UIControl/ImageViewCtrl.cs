@@ -41,6 +41,9 @@ namespace JH_VisionProject.UIControl
 
         public void LoadBitmap(Bitmap bitmap)
         {
+            if (bitmap == null)
+                return; // 또는 throw new ArgumentNullException(nameof(bitmap));
+
             // 기존에 로드된 이미지가 있다면 해제 후 초기화, 메모리누수 방지
             if (_bitmapImage != null)
             {
@@ -70,6 +73,35 @@ namespace JH_VisionProject.UIControl
         }
         private void ResizeCanvas() // 캔버스 크기 재설정
         {
+            if (Width <= 0 || Height <= 0)
+                return;
+
+            // 기존 캔버스 해제
+            if (Canvas != null)
+            {
+                Canvas.Dispose();
+                Canvas = null;
+            }
+
+            Canvas = new Bitmap(Width, Height);
+
+            // 이미지가 아직 없으면 여기까지만
+            if (_bitmapImage == null)
+            {
+                ImageRect = new RectangleF(0, 0, Width, Height);
+                return;
+            }
+
+            float virtualWidth = _bitmapImage.Width * _curZoom;
+            float virtualHeight = _bitmapImage.Height * _curZoom;
+
+            float offsetX = virtualWidth < Width ? (Width - virtualWidth) / 2 : 0;
+            float offsetY = virtualHeight < Height ? (Height - virtualHeight) / 2 : 0;
+
+            ImageRect = new RectangleF(offsetX, offsetY, virtualWidth, virtualHeight);
+        }
+
+            /*
             if (Width <= 0 || Height <= 0 || _bitmapImage == null)  //크기가 0이하이거나 이미지가 없을때
                 return;
 
@@ -84,8 +116,8 @@ namespace JH_VisionProject.UIControl
             float offsetX = virtualWidth < Width ? (Width - virtualWidth) / 2 : 0;          //가로 중앙 정렬
             float offsetY = virtualHeight < Height ? (Height - virtualHeight) / 2 : 0;      //세로 중앙 정렬
 
-            ImageRect = new RectangleF(offsetX, offsetY, virtualWidth, virtualHeight);      //이미지 렉트 설정
-        }
+            ImageRect = new RectangleF(offsetX, offsetY, virtualWidth, virtualHeight);      //이미지 렉트 설정*/
+        
 
         private void FitToImageToScrean()     // 화면에 이미지 맞추기
         {
@@ -137,6 +169,28 @@ namespace JH_VisionProject.UIControl
         {
             base.OnPaint(e);
 
+            // Canvas 없으면 그리지 않음
+            if (Canvas == null)
+                return;
+
+            using (Graphics g = Graphics.FromImage(Canvas))
+            {
+                g.Clear(Color.BlueViolet);
+
+                if (_bitmapImage != null)
+                {
+                    g.InterpolationMode =
+                        System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                    g.DrawImage(_bitmapImage, ImageRect);
+                }
+            }
+
+            e.Graphics.DrawImage(Canvas, 0, 0);
+        
+
+            /*
+            base.OnPaint(e);
+
             if (_bitmapImage != null && Canvas != null)
             {
                 using (Graphics g = Graphics.FromImage(Canvas))
@@ -149,7 +203,7 @@ namespace JH_VisionProject.UIControl
 
                     e.Graphics.DrawImage(Canvas, 0, 0); // 캔버스 그리기
                 }
-            }
+            }*/
         }
         public Bitmap GetCurBitmap()
         {

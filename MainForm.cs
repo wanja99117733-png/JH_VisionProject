@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using JH_VisionProject.Core;
 using WeifenLuo.WinFormsUI.Docking;
 
 namespace JH_VisionProject
@@ -35,6 +36,7 @@ namespace JH_VisionProject
 
             LoadDockingWindow();
 
+            Global.Inst.InspStage.Initialize();  // 전역변수로 선언된 InspStage의 Initialize함수 호출
         }
         /*
          * DockState     = _dockPanel에 직접 위치를 정할때
@@ -46,8 +48,9 @@ namespace JH_VisionProject
             cameraForm.Show(_dockPanel, DockState.Document); 
             // show클래스는 메인폼에서는 한개밖에 안됨 근데 DockContent를 cameraForm에 선언함으로 여러개 가능
 
-            var resultForm = new ResultForm();
-            resultForm.Show(cameraForm.Pane, DockAlignment.Bottom, 0.3);
+
+            var runWindow = new RunForm();
+            runWindow.Show(cameraForm.Pane, DockAlignment.Bottom, 0.3);
 
             var propForm = new PropertiesForm();                // var는 자동형식지정
             propForm.Show(_dockPanel, DockState.DockRight);

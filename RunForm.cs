@@ -12,7 +12,7 @@ using WeifenLuo.WinFormsUI.Docking;
 
 namespace JH_VisionProject
 {
-    public partial class RunForm : Form
+    public partial class RunForm : DockContent
     {
         public RunForm()
         {
