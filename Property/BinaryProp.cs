@@ -41,9 +41,22 @@ namespace JH_VisionProject.Property
         public int LeftValue => binRangeTrackbar.ValueLeft;
         public int RightValue => binRangeTrackbar.ValueRight;
 
+        //#8_INSPECT_BINARY#8 GridView의 업데이트 여부를 제어하는 변수와 Blob 특징 인덱스 정의
+        private bool _updateDataGridView = true;
+        private readonly int COL_USE = 1;
+        private readonly int COL_MIN = 2;
+        private readonly int COL_MAX = 3;
+
+
         public BinaryProp()
         {
             InitializeComponent();
+
+            //#8_INSPECT_BINARY#9 이진화 속성창 초기화
+            cbBinMethod.DataSource = Enum.GetValues(typeof(BinaryMethod)).Cast<BinaryMethod>().ToList();
+            cbBinMethod.SelectedIndex = (int)BinaryMethod.Feature;
+
+            InitializeFilterDataGridView();
 
             // TrackBar 초기 설정
             binRangeTrackbar.RangeChanged += Range_RangeChanged;
@@ -60,9 +73,64 @@ namespace JH_VisionProject.Property
             cbHighlight.SelectedIndex = 0; // 기본값으로 "사용안함" 선택
         }
 
+        private void InitializeFilterDataGridView()
+        {
+            // 컬럼 설정
+            dataGridViewFilter.Columns.Add(new DataGridViewTextBoxColumn()
+            {
+                HeaderText = "필터명",
+                ReadOnly = true,
+                SortMode = DataGridViewColumnSortMode.NotSortable,  //NotSortable로 변경불가로 설정
+                Width = 70
+            });
+
+            dataGridViewFilter.Columns.Add(new DataGridViewCheckBoxColumn()
+            {
+                HeaderText = "사용",
+                SortMode = DataGridViewColumnSortMode.NotSortable,
+                Width = 40
+            });
+
+            dataGridViewFilter.Columns.Add(new DataGridViewTextBoxColumn()
+            {
+                HeaderText = "최소값",
+                SortMode = DataGridViewColumnSortMode.NotSortable,
+                Width = 65
+            });
+
+            dataGridViewFilter.Columns.Add(new DataGridViewTextBoxColumn()
+            {
+                HeaderText = "최대값",
+                SortMode = DataGridViewColumnSortMode.NotSortable,
+                Width = 65
+            });
+
+            // 항목 추가
+            AddFilterRow("Area");
+            AddFilterRow("Length");
+            AddFilterRow("Width");
+            AddFilterRow("Count");
+
+            dataGridViewFilter.AllowUserToAddRows = false;                              //행 추가 비허용
+            dataGridViewFilter.RowHeadersVisible = false;                               //행 헤더 비표시
+            dataGridViewFilter.AllowUserToResizeColumns = false;                        //열 크기 조절 비허용
+            dataGridViewFilter.AllowUserToResizeRows = false;                           //행 크기 조절 비허용
+            dataGridViewFilter.AllowUserToOrderColumns = false;                         //열 순서 변경 비허용
+            dataGridViewFilter.SelectionMode = DataGridViewSelectionMode.FullRowSelect; //행 단위 선택
+        }
+
+        private void AddFilterRow(string itemName)
+        {
+            dataGridViewFilter.Rows.Add(itemName, false, "", "");
+        }
+
         public void SetAlgorithm(BlobAlgorithm blobAlgo)
         {
             _blobAlgo = blobAlgo;
+
+            //#8_INSPECT_BINARY#10 이진화 알고리즘 필터값이 없을 경우, 기본값 설정
+            if (_blobAlgo.BlobFilters.Count <= 0)
+                blobAlgo.SetDefault();
 
             SetProperty();
         }
@@ -85,6 +153,12 @@ namespace JH_VisionProject.Property
             {
                 binRangeTrackbar.SetThreshold(threshold.lower, threshold.upper);
             }
+
+            //#8_INSPECT_BINARY#11 이진화 검사 관련 속성값 적용
+            cbBinMethod.SelectedIndex = (int)_blobAlgo.BinMethod;
+
+            UpdateDataGridView(true);
+            chkRotatedRect.Checked = _blobAlgo.UseRotatedRect;
         }
 
         //UI컨트롤러 값을 이진화 알고리즘 클래스에 적용
@@ -114,6 +188,57 @@ namespace JH_VisionProject.Property
             }
 
             _blobAlgo.BinThreshold = threshold;
+
+            //#8_INSPECT_BINARY#12 GridView 값을 _blobAlgo에 반영
+            UpdateDataGridView(false);
+        }
+
+        private void UpdateDataGridView(bool update)
+        {
+            if (_blobAlgo is null)
+                return;
+
+            if (update)
+            {
+                _updateDataGridView = false;
+                List<BlobFilter> blobFilters = _blobAlgo.BlobFilters;
+
+                for (int i = 0; i < blobFilters.Count; i++)
+                {
+                    if (i >= dataGridViewFilter.Rows.Count)
+                        break;
+
+                    dataGridViewFilter.Rows[i].Cells[COL_USE].Value = blobFilters[i].isUse;
+                    dataGridViewFilter.Rows[i].Cells[COL_MIN].Value = blobFilters[i].min;
+                    dataGridViewFilter.Rows[i].Cells[COL_MAX].Value = blobFilters[i].max;
+                }
+                _updateDataGridView = true;
+            }
+            else
+            {
+                if (_updateDataGridView == false)
+                    return;
+
+                List<BlobFilter> blobFilters = _blobAlgo.BlobFilters;
+
+                for (int i = 0; i < blobFilters.Count; i++)
+                {
+                    BlobFilter blobFilter = blobFilters[i];
+                    blobFilter.isUse = (bool)dataGridViewFilter.Rows[i].Cells[COL_USE].Value;
+
+                    object value = dataGridViewFilter.Rows[i].Cells[COL_MIN].Value;
+
+                    int min = 0;
+                    if (value != null && int.TryParse(value.ToString(), out min))
+                        blobFilter.min = min;
+
+                    value = dataGridViewFilter.Rows[i].Cells[COL_MAX].Value;
+
+                    int max = 0;
+                    if (value != null && int.TryParse(value.ToString(), out max))
+                        blobFilter.max = max;
+                }
+            }
         }
 
         //이진화 옵션을 선택할때마다, 이진화 이미지가 갱신되도록 하는 함수
@@ -147,6 +272,9 @@ namespace JH_VisionProject.Property
             bool useBinary = chkUse.Checked;
             grpBinary.Enabled = useBinary;
 
+            //#8_INSPECT_BINARY#13 검사 여부에 따른, 활성화 여부
+            dataGridViewFilter.Enabled = useBinary;
+
             GetProperty();
         }
 
@@ -154,6 +282,60 @@ namespace JH_VisionProject.Property
         private void cbHighlight_SelectedIndexChanged(object sender, EventArgs e)
         {
             UpdateBinary();
+        }
+
+        private void dataGridViewFilter_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+
+        }
+        //#8_INSPECT_BINARY#14 이벤트 발생시 값에 반영
+        private void dataGridViewFilter_CellValueChanged_1(object sender, DataGridViewCellEventArgs e)
+        {
+            if(_updateDataGridView == true)
+                UpdateDataGridView(false);
+        }
+
+        // DataGridView안에 있는 체크박스의 경우, CellValueChanged가 발생하지 않아,
+        // CellDirtyStateChanged 이벤트를 사용하여 체크박스의 상태가 변경될 때 CommitEdit을 호출합니다.
+        private void dataGridViewFilter_CurrentCellDirtyStateChanged_1(object sender, EventArgs e)
+        {
+            if (dataGridViewFilter.CurrentCell is DataGridViewCheckBoxCell)
+            {
+                dataGridViewFilter.CommitEdit(DataGridViewDataErrorContexts.Commit);
+            }
+        }
+
+        private void chkRotatedRect_CheckedChanged_1(object sender, EventArgs e)
+        {
+            if (_blobAlgo is null)
+                return;
+
+            _blobAlgo.UseRotatedRect = chkRotatedRect.Checked;
+        }
+
+        private void cbBinMethod_SelectedIndexChanged_1(object sender, EventArgs e)
+        {
+            if (_blobAlgo is null)
+                return;
+
+            _blobAlgo.BinMethod = (BinaryMethod)cbBinMethod.SelectedIndex;
+            chkRotatedRect.Enabled = _blobAlgo.BinMethod == BinaryMethod.Feature;
+
+            if (_blobAlgo.BinMethod == BinaryMethod.PixelCount)
+            {
+                for (int i = 0; i < dataGridViewFilter.Rows.Count; i++)
+                {
+                    bool useFeature = i == 0 ? true : false; // Area 필터만 사용 가능
+                    dataGridViewFilter.Rows[i].Cells[COL_USE].Value = useFeature;
+                }
+                dataGridViewFilter.Columns[COL_USE].ReadOnly = true;
+            }
+            else
+            {
+                dataGridViewFilter.Columns[COL_USE].ReadOnly = false;
+            }
+
+            _updateDataGridView = true;
         }
     }
 

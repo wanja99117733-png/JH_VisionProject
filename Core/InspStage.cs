@@ -69,6 +69,9 @@ namespace JH_VisionProject.Core
             get => _previewImage;
         }
 
+        //#8_LIVE#1 LIVE 모드 프로퍼티
+        public bool LiveMode { get; set; } = false;
+
         public bool Initialize()
         {
             _imageSpace = new ImageSpace();
@@ -162,6 +165,45 @@ namespace JH_VisionProject.Core
             }
         }
 
+        //#8_INSPECT_BINARY#19 이진화 검사 함수
+        public void TryInspection()
+        {
+            if (_blobAlgorithm is null)
+                return;
+
+            Mat srcImage = Global.Inst.InspStage.GetMat();
+            _blobAlgorithm.SetInspData(srcImage);
+
+            _blobAlgorithm.InspRect = new Rect(0, 0, srcImage.Width, srcImage.Height);
+
+            if (_blobAlgorithm.DoInspect())
+            {
+                DisplayResult();
+            }
+        }
+
+        //검사된 알고리즘이 가지고 있는 검사 결과 정보를 화면에 출력
+        private bool DisplayResult()
+        {
+            if (_blobAlgorithm is null)
+                return false;
+
+            List<DrawInspectInfo> resultArea = new List<DrawInspectInfo>();
+            int resultCnt = _blobAlgorithm.GetResultRect(out resultArea);
+            if (resultCnt > 0)
+            {
+                //찾은 위치를 이미지상에서 표시
+                var cameraForm = MainForm.GetDockForm<CameraForm>();
+                if (cameraForm != null)
+                {
+                    cameraForm.ResetDisplay();
+                    cameraForm.AddRect(resultArea);
+                }
+            }
+
+            return true;
+        }
+
         public void Grab(int bufferIndex)
         {
             if (_grabManager == null)
@@ -171,7 +213,7 @@ namespace JH_VisionProject.Core
         }
 
         //영상 취득 완료 이벤트 발생시 후처리
-        private void _multiGrab_TransferCompleted(object sender, object e)
+        private async void _multiGrab_TransferCompleted(object sender, object e)
         {
             int bufferIndex = (int)e;
             Console.WriteLine($"_multiGrab_TransferCompleted {bufferIndex}");
@@ -184,6 +226,14 @@ namespace JH_VisionProject.Core
             {
                 Bitmap bitmap = ImageSpace.GetBitmap(0);
                 _previewImage.SetImage(BitmapConverter.ToMat(bitmap));
+            }
+
+            //#8_LIVE#2 LIVE 모드일때, Grab을 계속 실행하여, 반복되도록 구현
+            //이 함수는 await를 사용하여 비동기적으로 실행되어, 함수를 async로 선언해야 합니다.
+            if (LiveMode)
+            {
+                await Task.Delay(100);  // 비동기 대기
+                _grabManager.Grab(bufferIndex, true);  // 다음 촬영 시작
             }
         }
 

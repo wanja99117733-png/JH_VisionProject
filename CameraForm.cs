@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using JH_VisionProject.Algorithm;
 using JH_VisionProject.Core;
 using OpenCvSharp;
 using WeifenLuo.WinFormsUI.Docking;
@@ -87,5 +88,18 @@ namespace JH_VisionProject
         {
             imageViewer.Invalidate();
         }
+
+        //#8_INSPECT_BINARY#18 imageViewer에 검사 결과 정보를 연결해주기 위한 함수
+        public void ResetDisplay()
+        {
+            imageViewer.ResetEntity();
+        }
+
+        //FIXME 검사 결과를 그래픽으로 출력하기 위한 정보를 받는 함수
+        public void AddRect(List<DrawInspectInfo> rectInfos)
+        {
+            imageViewer.AddRect(rectInfos);
+        }
+
     }
 }
