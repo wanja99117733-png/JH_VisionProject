@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using JH_VisionProject.Core;
+using JH_VisionProject.Setting;
 using WeifenLuo.WinFormsUI.Docking;
 
 namespace JH_VisionProject
@@ -100,6 +101,27 @@ namespace JH_VisionProject
         private void MainForm_Load(object sender, EventArgs e)
         {
 
+        }
+
+        private void setupToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            SetupForm setupForm = new SetupForm();
+            setupForm.ShowDialog();
+        }
+
+        private void setupToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void MainForm_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            
+        }
+
+        private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            Global.Inst.Dispose();
         }
     }
 }

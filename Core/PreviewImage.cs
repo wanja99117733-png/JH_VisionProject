@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using static JH_VisionProject.Property.BinaryProp;
 using JH_VisionProject.Property;
+using JH_VisionProject.Teach;
 
 namespace JH_VisionProject.Core
 {
@@ -15,12 +16,20 @@ namespace JH_VisionProject.Core
     {
         private Mat _originalImage = null;
         private Mat _previewImage = null;
+
+        //#10_INSPWINDOW#5 프리뷰를 위한 InspWindow 변수
+        private InspWindow _inspWindow = null;
         private bool _usePreview = true;
 
         public void SetImage(Mat image)
         {
             _originalImage = image;
             _previewImage = new Mat();
+        }
+        //#10_INSPWINDOW#6 프리뷰를 위한 InspWindow 설정
+        public void SetInspWindow(InspWindow inspwindow)
+        {
+            _inspWindow = inspwindow;
         }
 
         //ShowBinaryMode에 따라 이진화 프리뷰 진행
@@ -44,6 +53,12 @@ namespace JH_VisionProject.Core
             }
 
             Rect windowArea = new Rect(0, 0, _originalImage.Width, _originalImage.Height);
+
+            //#10_INSPWINDOW#7 InspWindow가 있다면 프리뷰 설정 영역을 ROI로 변경
+            if (_inspWindow != null)
+            {
+                windowArea = _inspWindow.WindowArea;
+            }
 
             Mat orgRoi = _originalImage[windowArea];
 

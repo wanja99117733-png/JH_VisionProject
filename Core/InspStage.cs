@@ -12,6 +12,8 @@ using System.ComponentModel;
 using OpenCvSharp;
 using JH_VisionProject.Algorithm;
 using OpenCvSharp.Extensions;
+using JH_VisionProject.Setting;
+using JH_VisionProject.Teach;
 
 namespace JH_VisionProject.Core
 {
@@ -41,6 +43,9 @@ namespace JH_VisionProject.Core
 
         //#7_BINARY_PREVIEW#1 이진화 프리뷰에 필요한 변수 선언
         BlobAlgorithm _blobAlgorithm = null; // Blob 알고리즘 인스턴스
+
+        private Model _model = null;
+
         private PreviewImage _previewImage = null;
 
         public InspStage() { }
@@ -68,9 +73,13 @@ namespace JH_VisionProject.Core
         {
             get => _previewImage;
         }
+        public Model CurModel
+        {
+            get => _model;
+        }
 
         //#8_LIVE#1 LIVE 모드 프로퍼티
-        public bool LiveMode { get; set; } = false;
+        public bool LiveMode { get; set; } = false; // 시작하자마자 돌지않게 false로 초기화
 
         public bool Initialize()
         {
@@ -79,6 +88,11 @@ namespace JH_VisionProject.Core
             //#7_BINARY_PREVIEW#3 이진화 알고리즘과 프리뷰 변수 인스턴스 생성
             _blobAlgorithm = new BlobAlgorithm();
             _previewImage = new PreviewImage();
+
+            _model = new Model();
+
+            //#9_SETUP#2 환경설정에서 설정값 가져오기
+            LoadSetting();
 
             switch (_camType)
             {
@@ -105,6 +119,12 @@ namespace JH_VisionProject.Core
             return true;
         }
 
+        private void LoadSetting()
+        {
+            //카메라 설정 타입 얻기
+            _camType = SettingXml.Inst.CamType;
+        }
+
         public void InitModelGrab(int bufferCount)
         {
             if (_grabManager == null)
@@ -127,21 +147,19 @@ namespace JH_VisionProject.Core
 
             //_grabManager.SetExposureTime(25000);
 
-            //#7_BINARY_PREVIEW#9 이진화 알고리즘을 속성창에 연동하기 위한 함수 구현            
-            UpdateProperty();
         }
 
 
-        private void UpdateProperty()
+        private void UpdateProperty(InspWindow inspWindow)
         {
-            if (BlobAlgorithm is null)
+            if (inspWindow is null)
                 return;
 
             PropertiesForm propertiesForm = MainForm.GetDockForm<PropertiesForm>();
             if (propertiesForm is null)
                 return;
 
-            propertiesForm.UpdateProperty(BlobAlgorithm);
+            propertiesForm.UpdateProperty(inspWindow);
         }
 
         public void SetBuffer(int bufferCount)
@@ -166,20 +184,148 @@ namespace JH_VisionProject.Core
         }
 
         //#8_INSPECT_BINARY#19 이진화 검사 함수
-        public void TryInspection()
+        public void TryInspection(InspWindow inspWindow = null)
         {
-            if (_blobAlgorithm is null)
+            if (inspWindow is null)
+            {
+                if (_selectedInspWindow is null)
+                    return;
+
+                inspWindow = _selectedInspWindow;
+            }
+
+            UpdateDiagramEntity();
+
+            List<DrawInspectInfo> totalArea = new List<DrawInspectInfo>();
+
+            Rect windowArea = inspWindow.WindowArea;
+
+            foreach (var inspAlgo in inspWindow.AlgorithmList)
+            {
+                //검사 영역 초기화
+                inspAlgo.TeachRect = windowArea;
+                inspAlgo.InspRect = windowArea;
+
+                InspectType inspType = inspAlgo.InspectType;
+
+                switch (inspType)
+                {
+                    case InspectType.InspBinary:
+                        {
+                            BlobAlgorithm blobAlgo = (BlobAlgorithm)inspAlgo;
+
+                            Mat srcImage = Global.Inst.InspStage.GetMat();
+                            blobAlgo.SetInspData(srcImage);
+
+                            if (blobAlgo.DoInspect())
+                            {
+                                List<DrawInspectInfo> resultArea = new List<DrawInspectInfo>();
+                                int resultCnt = blobAlgo.GetResultRect(out resultArea);
+                                if (resultCnt > 0)
+                                {
+                                    totalArea.AddRange(resultArea);
+                                }
+                            }
+
+                            break;
+                        }
+                }
+
+                if (inspAlgo.DoInspect())
+                {
+                    List<DrawInspectInfo> resultArea = new List<DrawInspectInfo>();
+                    int resultCnt = inspAlgo.GetResultRect(out resultArea);
+                    if (resultCnt > 0)
+                    {
+                        totalArea.AddRange(resultArea);
+                    }
+                }
+            }
+
+            if (totalArea.Count > 0)
+            {
+                //찾은 위치를 이미지상에서 표시
+                var cameraForm = MainForm.GetDockForm<CameraForm>();
+                if (cameraForm != null)
+                {
+                    cameraForm.AddRect(totalArea);
+                }
+            }
+        }
+        //#10_INSPWINDOW#13 ImageViewCtrl에서 ROI 생성,수정,이동,선택 등에 대한 함수
+        public void SelectInspWindow(InspWindow inspWindow)
+        {
+            _selectedInspWindow = inspWindow;
+
+            var propForm = MainForm.GetDockForm<PropertiesForm>();
+            if (propForm != null)
+            {
+                if (inspWindow is null)
+                {
+                    propForm.ResetProperty();
+                    return;
+                }
+
+                //속성창을 현재 선택된 ROI에 대한 것으로 변경
+                propForm.ShowProperty(inspWindow);
+            }
+
+            UpdateProperty(inspWindow);
+
+            Global.Inst.InspStage.PreView.SetInspWindow(inspWindow);
+        }
+        //ImageViwer에서 ROI를 추가하여, InspWindow생성하는 함수
+        public void AddInspWindow(InspWindowType windowType, Rect rect)
+        {
+            InspWindow inspWindow = _model.AddInspWindow(windowType);
+            if (inspWindow is null)
                 return;
 
-            Mat srcImage = Global.Inst.InspStage.GetMat();
-            _blobAlgorithm.SetInspData(srcImage);
+            inspWindow.WindowArea = rect;
+            inspWindow.IsTeach = false;
+            UpdateProperty(inspWindow);
+            UpdateDiagramEntity();
 
-            _blobAlgorithm.InspRect = new Rect(0, 0, srcImage.Width, srcImage.Height);
-
-            if (_blobAlgorithm.DoInspect())
+            CameraForm cameraForm = MainForm.GetDockForm<CameraForm>();
+            if (cameraForm != null)
             {
-                DisplayResult();
+                cameraForm.SelectDiagramEntity(inspWindow);
+                SelectInspWindow(inspWindow);
             }
+        }
+
+
+        public bool AddInspWindow(InspWindow sourceWindow, OpenCvSharp.Point offset)
+        {
+            InspWindow cloneWindow = sourceWindow.Clone(offset);
+            if (cloneWindow is null)
+                return false;
+
+            if (!_model.AddInspWindow(cloneWindow))
+                return false;
+
+            UpdateProperty(cloneWindow);
+            UpdateDiagramEntity();
+
+            CameraForm cameraForm = MainForm.GetDockForm<CameraForm>();
+            if (cameraForm != null)
+            {
+                cameraForm.SelectDiagramEntity(cloneWindow);
+                SelectInspWindow(cloneWindow);
+            }
+
+            return true;
+        }
+
+
+        //입력된 윈도우 이동
+        public void MoveInspWindow(InspWindow inspWindow, OpenCvSharp.Point offset)
+        {
+            if (inspWindow == null)
+                return;
+
+            inspWindow.OffsetMove(offset);
+            UpdateProperty(inspWindow);
         }
 
         //검사된 알고리즘이 가지고 있는 검사 결과 정보를 화면에 출력
@@ -224,18 +370,18 @@ namespace JH_VisionProject.Core
 
             if (_previewImage != null)
             {
-                Bitmap bitmap = ImageSpace.GetBitmap(0);
-                _previewImage.SetImage(BitmapConverter.ToMat(bitmap));
+                Bitmap bitmap = ImageSpace.GetBitmap(0);    //프리뷰용은 0번 버퍼 사용
+                _previewImage.SetImage(BitmapConverter.ToMat(bitmap));  //현재 이미지로 프리뷰 이미지 갱신
             }
 
             //#8_LIVE#2 LIVE 모드일때, Grab을 계속 실행하여, 반복되도록 구현
             //이 함수는 await를 사용하여 비동기적으로 실행되어, 함수를 async로 선언해야 합니다.
             if (LiveMode)
             {
-                await Task.Delay(100);  // 비동기 대기
+                await Task.Delay(10);  // 비동기 대기
                 _grabManager.Grab(bufferIndex, true);  // 다음 촬영 시작
             }
-        }
+        }   // await Task.Delay(10); 에서의 await는 async 함수내에서만 작동가능 이것을 해야지 병렬처리 하듯이 동시 작동이 됨
 
         private void DisplayGrabImage(int bufferIndex)
         {
@@ -279,6 +425,22 @@ namespace JH_VisionProject.Core
         public Mat GetMat()
         {
             return Global.Inst.InspStage.ImageSpace.GetMat();
+        }
+
+        //#10_INSPWINDOW#14 변경된 모델 정보 갱신하여, ImageViewer와 모델트리에 반영
+        public void UpdateDiagramEntity()
+        {
+            CameraForm cameraForm = MainForm.GetDockForm<CameraForm>();
+            if (cameraForm != null)
+            {
+                cameraForm.UpdateDiagramEntity();
+            }
+
+            ModelTreeForm modelTreeForm = MainForm.GetDockForm<ModelTreeForm>();
+            if (modelTreeForm != null)
+            {
+                modelTreeForm.UpdateDiagramEntity();
+            }
         }
 
         //#7_BINARY_PREVIEW#5 이진화 임계값 변경시, 프리뷰 갱신

@@ -29,8 +29,8 @@
         private void InitializeComponent()
         {
             this.btnGrab = new System.Windows.Forms.Button();
-            this.btnLive = new System.Windows.Forms.Button();
             this.btnStart = new System.Windows.Forms.Button();
+            this.checkBox1 = new System.Windows.Forms.CheckBox();
             this.SuspendLayout();
             // 
             // btnGrab
@@ -43,19 +43,9 @@
             this.btnGrab.UseVisualStyleBackColor = true;
             this.btnGrab.Click += new System.EventHandler(this.btnGrab_Click);
             // 
-            // btnLive
-            // 
-            this.btnLive.Location = new System.Drawing.Point(233, 12);
-            this.btnLive.Name = "btnLive";
-            this.btnLive.Size = new System.Drawing.Size(178, 83);
-            this.btnLive.TabIndex = 1;
-            this.btnLive.Text = "LIVE";
-            this.btnLive.UseVisualStyleBackColor = true;
-            this.btnLive.Click += new System.EventHandler(this.btnLive_Click);
-            // 
             // btnStart
             // 
-            this.btnStart.Location = new System.Drawing.Point(446, 12);
+            this.btnStart.Location = new System.Drawing.Point(196, 12);
             this.btnStart.Name = "btnStart";
             this.btnStart.Size = new System.Drawing.Size(178, 83);
             this.btnStart.TabIndex = 2;
@@ -63,24 +53,36 @@
             this.btnStart.UseVisualStyleBackColor = true;
             this.btnStart.Click += new System.EventHandler(this.btnStart_Click);
             // 
+            // checkBox1
+            // 
+            this.checkBox1.AutoSize = true;
+            this.checkBox1.Location = new System.Drawing.Point(12, 101);
+            this.checkBox1.Name = "checkBox1";
+            this.checkBox1.Size = new System.Drawing.Size(66, 22);
+            this.checkBox1.TabIndex = 3;
+            this.checkBox1.Text = "Live";
+            this.checkBox1.UseVisualStyleBackColor = true;
+            this.checkBox1.CheckedChanged += new System.EventHandler(this.checkBox1_CheckedChanged);
+            // 
             // RunForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(10F, 18F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
+            this.Controls.Add(this.checkBox1);
             this.Controls.Add(this.btnStart);
-            this.Controls.Add(this.btnLive);
             this.Controls.Add(this.btnGrab);
             this.Name = "RunForm";
             this.Text = "RunForm";
             this.ResumeLayout(false);
+            this.PerformLayout();
 
         }
 
         #endregion
 
         private System.Windows.Forms.Button btnGrab;
-        private System.Windows.Forms.Button btnLive;
         private System.Windows.Forms.Button btnStart;
+        private System.Windows.Forms.CheckBox checkBox1;
     }
 }
