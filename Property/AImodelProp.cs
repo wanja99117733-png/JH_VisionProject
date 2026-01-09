@@ -22,6 +22,9 @@ namespace JH_VisionProject.Property
         public AImodelProp()
         {
             InitializeComponent();
+            
+            cbAImodelType.DataSource = Enum.GetValues(typeof(AIEngineType)).Cast<AIEngineType>().ToList();
+            cbAImodelType.SelectedIndex = 0;
         }
 
         private void AImodelProp_Load(object sender, EventArgs e)

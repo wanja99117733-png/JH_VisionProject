@@ -43,10 +43,14 @@ namespace JH_VisionProject.Core
 
         //#7_BINARY_PREVIEW#1 이진화 프리뷰에 필요한 변수 선언
         BlobAlgorithm _blobAlgorithm = null; // Blob 알고리즘 인스턴스
+        private PreviewImage _previewImage = null;
 
+        //#10_INSPWINDOW#8 모델과 선택된 ROI 윈도우 변수 선언
         private Model _model = null;
 
-        private PreviewImage _previewImage = null;
+        private InspWindow _selectedInspWindow = null;
+
+        
 
         public InspStage() { }
         public ImageSpace ImageSpace
@@ -63,16 +67,12 @@ namespace JH_VisionProject.Core
             }                
         }
 
-        //#7_BINARY_PREVIEW#2 이진화 알고리즘과 프리뷰 변수에 대한 프로퍼티 생성
-        public BlobAlgorithm BlobAlgorithm
-        {
-            get => _blobAlgorithm;
-        }
 
         public PreviewImage PreView
         {
             get => _previewImage;
         }
+        //#10_INSPWINDOW#9 현재 모델 프로퍼티 생성
         public Model CurModel
         {
             get => _model;
@@ -85,10 +85,10 @@ namespace JH_VisionProject.Core
         {
             _imageSpace = new ImageSpace();
 
-            //#7_BINARY_PREVIEW#3 이진화 알고리즘과 프리뷰 변수 인스턴스 생성
-            _blobAlgorithm = new BlobAlgorithm();
+            //#7_BINARY_PREVIEW#3 이진화 알고리즘과 프리뷰 변수 인스턴스 생성\
             _previewImage = new PreviewImage();
 
+            //#10_INSPWINDOW#10 모델 인스턴스 생성
             _model = new Model();
 
             //#9_SETUP#2 환경설정에서 설정값 가져오기
@@ -316,7 +316,7 @@ namespace JH_VisionProject.Core
 
             return true;
         }
-
+            
 
         //입력된 윈도우 이동
         public void MoveInspWindow(InspWindow inspWindow, OpenCvSharp.Point offset)
@@ -326,6 +326,31 @@ namespace JH_VisionProject.Core
 
             inspWindow.OffsetMove(offset);
             UpdateProperty(inspWindow);
+        }
+        //#MODEL#10 기존 ROI 수정되었을때, 그 정보를 InspWindow에 반영
+        public void ModifyInspWindow(InspWindow inspWindow, Rect rect)
+        {
+            if (inspWindow == null)
+                return;
+
+            inspWindow.WindowArea = rect;
+            inspWindow.IsTeach = false;
+
+            UpdateProperty(inspWindow);
+        }
+
+        //#MODEL#11 InspWindow 삭제하기
+        public void DelInspWindow(InspWindow inspWindow)
+        {
+            _model.DelInspWindow(inspWindow);
+            UpdateDiagramEntity();
+        }
+
+
+        public void DelInspWindow(List<InspWindow> inspWindowList)
+        {
+            _model.DelInspWindowList(inspWindowList);
+            UpdateDiagramEntity();
         }
 
         //검사된 알고리즘이 가지고 있는 검사 결과 정보를 화면에 출력

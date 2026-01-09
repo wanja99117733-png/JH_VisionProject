@@ -45,30 +45,28 @@ namespace JH_VisionProject
          */
         private void LoadDockingWindow()
         {
-            var cameraForm = new CameraForm();
-            cameraForm.Show(_dockPanel, DockState.Document); 
-            // show클래스는 메인폼에서는 한개밖에 안됨 근데 DockContent를 cameraForm에 선언함으로 여러개 가능
+            //도킹해제 금지 설정
+            _dockPanel.AllowEndUserDocking = false;
 
+            //메인폼 설정
+            var cameraWindow = new CameraForm();
+            cameraWindow.Show(_dockPanel, DockState.Document);
 
+            //메인폼 설정
             var runWindow = new RunForm();
-            runWindow.Show(cameraForm.Pane, DockAlignment.Bottom, 0.3);
+            runWindow.Show(cameraWindow.Pane, DockAlignment.Bottom, 0.3);
 
-            var propForm = new PropertiesForm();                // var는 자동형식지정
-            propForm.Show(_dockPanel, DockState.DockRight);
+            //#11_MODEL_TREE#1 검사 결과창 우측에 40% 비율로 모델트리 추가
+            var modelTreeWindow = new ModelTreeForm();
+            modelTreeWindow.Show(runWindow.Pane, DockAlignment.Right, 0.3);
 
-            var statisticForm = new StatisticForm();
-            statisticForm.Show(_dockPanel, DockState.DockRight);
-
-            var logForm = new LogForm();
-            logForm.Show(propForm.Pane, DockAlignment.Bottom, 0.35);
+            //속성창 추가
+            var propWindow = new PropertiesForm();
+            propWindow.Show(_dockPanel, DockState.DockRight);
 
         }
         //제네릭 함수 사용을 이용해 입력된 타입의 폼 객체 얻기
-        public static T GetDockContent<T>() where T : DockContent 
-        {
-            var findForm = _dockPanel.Contents.OfType<T>().FirstOrDefault();    
-            return findForm;
-        }
+        
         public static T GetDockForm<T>() where T : DockContent
         {
             var findForm = _dockPanel.Contents.OfType<T>().FirstOrDefault();

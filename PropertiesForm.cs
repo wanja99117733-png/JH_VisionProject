@@ -1,6 +1,7 @@
 ﻿using JH_VisionProject.Algorithm;
 using JH_VisionProject.Core;
 using JH_VisionProject.Property;
+using JH_VisionProject.Teach;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -14,13 +15,7 @@ using WeifenLuo.WinFormsUI.Docking;
 
 namespace JH_VisionProject
 {
-    public enum PropertyType
-    {
-        Binary,
-        Filter,
-        AIModel
-    }
-
+    
     public partial class PropertiesForm : DockContent
     {
         Dictionary<string, TabPage> _allTabs = new Dictionary<string, TabPage>();
@@ -29,15 +24,12 @@ namespace JH_VisionProject
         {
             InitializeComponent();
 
-            LoadOptionControl(PropertyType.Filter);
-            LoadOptionControl(PropertyType.Binary);
-            LoadOptionControl(PropertyType.AIModel);
 
         }
 
-        private void LoadOptionControl(PropertyType propType)
+        private void LoadOptionControl(InspectType inspType)
         {
-            string tabName = propType.ToString();
+            string tabName = inspType.ToString();
     
             foreach (TabPage tabPage in tabPropControl.TabPages)
             {
@@ -49,8 +41,9 @@ namespace JH_VisionProject
                 tabPropControl.TabPages.Add(page);
                 return;
             }
-            UserControl _propType = CreateUserControl((PropertyType)propType);
-            if (_propType == null)
+
+            UserControl _inspProp = CreateUserControl(inspType);
+            if (_inspProp == null)
                 return;
 
             // 새 탭 추가
@@ -58,34 +51,34 @@ namespace JH_VisionProject
             {
                 Dock = DockStyle.Fill
             };
-            _propType.Dock = DockStyle.Fill;
-            newTab.Controls.Add(_propType);
+            _inspProp.Dock = DockStyle.Fill;
+            newTab.Controls.Add(_inspProp);
             tabPropControl.TabPages.Add(newTab);
             tabPropControl.SelectedTab = newTab; // 새 탭 선택
 
             _allTabs[tabName] = newTab;
         }
 
-        private UserControl CreateUserControl(PropertyType propType)
+        private UserControl CreateUserControl(InspectType inspPropType)
         {
             UserControl curProp = null;
-            switch (propType)
+            switch (inspPropType)
             {
-                case PropertyType.Binary:
+                case InspectType.InspBinary:
                     BinaryProp blobProp = new BinaryProp();
 
                     //#7_BINARY_PREVIEW#8 이진화 속성 변경시 발생하는 이벤트 추가
                     blobProp.RangeChanged += RangeSlider_RangeChanged;
-                    blobProp.PropertyChanged += PropertyChanged;
+                    //blobProp.PropertyChanged += PropertyChanged;
                     curProp = blobProp;
                     break;
-                case PropertyType.Filter:
+                case InspectType.InspFilter:
                     ImageFilterProp filterProp = new ImageFilterProp();
                     curProp = filterProp;
                     break;
-                case PropertyType.AIModel:
-                    AImodelProp aiModelProp = new AImodelProp();
-                    curProp = aiModelProp;
+                case InspectType.InspAIModule:
+                    AImodelProp aiModuleProp = new AImodelProp();
+                    curProp = aiModuleProp;
                     break;
                 default:
                     MessageBox.Show("유효하지 않은 옵션입니다.");
@@ -93,9 +86,24 @@ namespace JH_VisionProject
             }
             return curProp;
         }
-        public void UpdateProperty(BlobAlgorithm blobAlgorithm)
+
+
+        //#11_MODEL_TREE#3 InspWindow에서 사용하는 알고리즘을 모두 탭에 추가
+        public void ShowProperty(InspWindow window)
         {
-            if (blobAlgorithm is null)
+            foreach (InspAlgorithm algo in window.AlgorithmList)
+            {
+                LoadOptionControl(algo.InspectType);
+            }
+        }
+        public void ResetProperty()
+        {
+            tabPropControl.TabPages.Clear();
+        }
+
+        public void UpdateProperty(InspWindow window)
+        {
+            if (window is null)
                 return;
 
             foreach (TabPage tabPage in tabPropControl.TabPages)
@@ -106,7 +114,11 @@ namespace JH_VisionProject
 
                     if (uc is BinaryProp binaryProp)
                     {
-                        binaryProp.SetAlgorithm(blobAlgorithm);
+                        BlobAlgorithm blobAlgo = (BlobAlgorithm)window.FindInspAlgorithm(InspectType.InspBinary);
+                        if (blobAlgo is null)
+                            continue;
+
+                        binaryProp.SetAlgorithm(blobAlgo);
                     }
                 }
             }
