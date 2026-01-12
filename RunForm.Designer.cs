@@ -49,7 +49,7 @@
             this.btnStart.Name = "btnStart";
             this.btnStart.Size = new System.Drawing.Size(178, 83);
             this.btnStart.TabIndex = 2;
-            this.btnStart.Text = "사검";
+            this.btnStart.Text = "검사";
             this.btnStart.UseVisualStyleBackColor = true;
             this.btnStart.Click += new System.EventHandler(this.btnStart_Click);
             // 

@@ -198,9 +198,6 @@ namespace JH_VisionProject.Core
 
             Dispose();
 
-            _imageByChannel.Clear();
-            _imageInfo.Clear();
-
             Func<int, ImageInfo> newImageInfo = (x) =>
             {
                 var imageInfo = new ImageInfo();
@@ -391,7 +388,7 @@ namespace JH_VisionProject.Core
             if (_imageInfo.Count <= index)
                 return null;
 
-            if (channel == eImageChannel.Color)
+            if (channel == eImageChannel.Gray)
             {
                 return _imageInfo[index].ToMat();
             }

@@ -14,18 +14,10 @@ using JH_VisionProject.Algorithm;
 using OpenCvSharp.Extensions;
 using JH_VisionProject.Setting;
 using JH_VisionProject.Teach;
+using System.Runtime.InteropServices;
 
 namespace JH_VisionProject.Core
 {
-    /*
-    #6_INSP_STAGE# - <<<비전검사를 위한 클래스 구현>>> 
-    InspStage는 비전 검사 시스템의 핵심 클래스로, 
-    카메라 인터페이스와 이미지 처리 기능을 통합하여 검사 프로세스를 관리합니다.
-    1) ImageSpace 클래스 구현
-    2) InspStage 클래스 구현
-    3) Global 클래스 구현
-    4) RunForm 클래스 구현
-    */
 
     //검사와 관련된 클래스를 관리하는 클래스
     public class InspStage : IDisposable
@@ -80,6 +72,10 @@ namespace JH_VisionProject.Core
 
         //#8_LIVE#1 LIVE 모드 프로퍼티
         public bool LiveMode { get; set; } = false; // 시작하자마자 돌지않게 false로 초기화
+
+        public int SelBufferIndex { get; set; } = 0;
+        public eImageChannel SelImageChannel { get; set; } = eImageChannel.Gray;
+
 
         public bool Initialize()
         {
@@ -150,6 +146,55 @@ namespace JH_VisionProject.Core
         }
 
 
+        //#11_MATCHING#10 카메라 촬상 이미지와 파일 이미지 로딩시, 
+        //크기가 다를때, 이미지 버퍼를 다시 설정한 후, 이미지 로딩하는 함수
+        public void SetImageBuffer(string filePath)
+        {
+            Mat matImage = Cv2.ImRead(filePath);
+
+            int pixelBpp = 8;
+            int imageWidth;
+            int imageHeight;
+            int imageStride;
+
+            if (matImage.Type() == MatType.CV_8UC3)
+                pixelBpp = 24;
+
+            imageWidth = (matImage.Width + 3) / 4 * 4;
+            imageHeight = matImage.Height;
+
+            // 4바이트 정렬된 새로운 Mat 생성
+            Mat alignedMat = new Mat();
+            Cv2.CopyMakeBorder(matImage, alignedMat, 0, 0, 0, imageWidth - matImage.Width, BorderTypes.Constant, Scalar.Black);
+
+            imageStride = imageWidth * matImage.ElemSize();
+
+            if (_imageSpace != null)
+            {
+                if (_imageSpace.ImageSize.Width != imageWidth || _imageSpace.ImageSize.Height != imageHeight)
+                {
+                    _imageSpace.SetImageInfo(pixelBpp, imageWidth, imageHeight, imageStride);
+                    SetBuffer(_imageSpace.BufferCount);
+                }
+            }
+
+            int bufferIndex = 0;
+
+            // Mat의 데이터를 byte 배열로 복사
+            int bufSize = (int)(alignedMat.Total() * alignedMat.ElemSize());
+            Marshal.Copy(alignedMat.Data, ImageSpace.GetInspectionBuffer(bufferIndex), 0, bufSize);
+
+            _imageSpace.Split(bufferIndex);
+
+            DisplayGrabImage(bufferIndex);
+
+            if (_previewImage != null)
+            {
+                Bitmap bitmap = ImageSpace.GetBitmap(0);
+                _previewImage.SetImage(BitmapConverter.ToMat(bitmap));
+            }
+        }
+
         private void UpdateProperty(InspWindow inspWindow)
         {
             if (inspWindow is null)
@@ -162,26 +207,88 @@ namespace JH_VisionProject.Core
             propertiesForm.UpdateProperty(inspWindow);
         }
 
-        public void SetBuffer(int bufferCount)
+        //#11_MATCHING#6 패턴매칭 속성창과 연동된 패턴 이미지 관리 함수
+        public void UpdateTeachingImage(int index)
         {
-            if (_grabManager == null)
+            if (_selectedInspWindow is null)
                 return;
 
-            if (_imageSpace.BufferCount == bufferCount)
+            SetTeachingImage(_selectedInspWindow, index);
+        }
+
+        public void DelTeachingImage(int index)
+        {
+            if (_selectedInspWindow is null)
                 return;
 
-            _imageSpace.InitImageSpace(bufferCount);
-            _grabManager.InitBuffer(bufferCount);
+            InspWindow inspWindow = _selectedInspWindow;
 
-            for (int i = 0; i < bufferCount; i++)
+            inspWindow.DelWindowImage(index);
+
+            MatchAlgorithm matchAlgo = (MatchAlgorithm)inspWindow.FindInspAlgorithm(InspectType.InspMatch);
+            if (matchAlgo != null)
             {
-                _grabManager.SetBuffer(
-                    _imageSpace.GetInspectionBuffer(i),
-                    _imageSpace.GetnspectionBufferPtr(i),
-                    _imageSpace.GetInspectionBufferHandle(i),
-                    i);
+                UpdateProperty(inspWindow);
             }
         }
+
+        public void SetTeachingImage(InspWindow inspWindow, int index = -1)
+        {
+            if (inspWindow is null)
+                return;
+
+            CameraForm cameraForm = MainForm.GetDockForm<CameraForm>();
+            if (cameraForm is null)
+                return;
+
+            Mat curImage = cameraForm.GetDisplayImage();
+            if (curImage is null)
+                return;
+
+            if (inspWindow.WindowArea.Right >= curImage.Width ||
+                inspWindow.WindowArea.Bottom >= curImage.Height)
+            {
+                Console.Write("ROI 영역이 잘못되었습니다!");
+                return;
+            }
+
+            Mat windowImage = curImage[inspWindow.WindowArea];
+
+            if (index < 0)
+                inspWindow.AddWindowImage(windowImage);
+            else
+                inspWindow.SetWindowImage(windowImage, index);
+
+            inspWindow.IsPatternLearn = false;
+
+            MatchAlgorithm matchAlgo = (MatchAlgorithm)inspWindow.FindInspAlgorithm(InspectType.InspMatch);
+            if (matchAlgo != null)
+            {
+                UpdateProperty(inspWindow);
+            }
+        }
+
+
+        //#11_MATCHING#11 버퍼 재설정시, 항상 설정 되도록 수정
+        public void SetBuffer(int bufferCount)
+        {
+            _imageSpace.InitImageSpace(bufferCount);
+
+            if (_grabManager != null)
+            {
+                _grabManager.InitBuffer(bufferCount);
+
+                for (int i = 0; i < bufferCount; i++)
+                {
+                    _grabManager.SetBuffer(
+                        _imageSpace.GetInspectionBuffer(i),
+                        _imageSpace.GetnspectionBufferPtr(i),
+                        _imageSpace.GetInspectionBufferHandle(i),
+                        i);
+                }
+            }
+        }
+
 
         //#8_INSPECT_BINARY#19 이진화 검사 함수
         public void TryInspection(InspWindow inspWindow = null)
@@ -202,6 +309,9 @@ namespace JH_VisionProject.Core
 
             foreach (var inspAlgo in inspWindow.AlgorithmList)
             {
+                if (!inspAlgo.IsUse)
+                    continue;
+
                 //검사 영역 초기화
                 inspAlgo.TeachRect = windowArea;
                 inspAlgo.InspRect = windowArea;
@@ -283,6 +393,9 @@ namespace JH_VisionProject.Core
 
             inspWindow.WindowArea = rect;
             inspWindow.IsTeach = false;
+
+            //#11_MATCHING#7 새로운 ROI가 추가되면, 티칭 이미지 추가
+            SetTeachingImage(inspWindow);
             UpdateProperty(inspWindow);
             UpdateDiagramEntity();
 
@@ -426,17 +539,6 @@ namespace JH_VisionProject.Core
             }
         }
 
-        public Bitmap GetCurrentImage()
-        {
-            Bitmap bitmap = null;
-            var cameraForm = MainForm.GetDockForm<CameraForm>();
-            if (cameraForm != null)
-            {
-                bitmap = cameraForm.GetDisplayImage();                
-            }
-
-            return bitmap;
-        }
 
         public Bitmap GetBitmap(int bufferIndex = -1)
         {
@@ -447,9 +549,16 @@ namespace JH_VisionProject.Core
         }
 
         //#7_BINARY_PREVIEW#4 이진화 프리뷰를 위해, ImageSpace에서 이미지 가져오기
-        public Mat GetMat()
+        public Mat GetMat(int bufferIndex = -1, eImageChannel imageChannel = eImageChannel.None)
         {
-            return Global.Inst.InspStage.ImageSpace.GetMat();
+            if (bufferIndex >= 0)
+                SelBufferIndex = bufferIndex;
+
+            //#BINARY FILTER#14 채널 정보가 유지되도록, eImageChannel.None 타입을 추가
+            if (imageChannel != eImageChannel.None)
+                SelImageChannel = imageChannel;
+
+            return Global.Inst.InspStage.ImageSpace.GetMat(SelBufferIndex, SelImageChannel);
         }
 
         //#10_INSPWINDOW#14 변경된 모델 정보 갱신하여, ImageViewer와 모델트리에 반영

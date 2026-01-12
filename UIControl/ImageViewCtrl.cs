@@ -307,7 +307,7 @@ namespace JH_VisionProject.UIControl
                     e.Graphics.DrawImage(Canvas, 0, 0); // 캔버스 그리기
                 }
             }*/
-        }
+        }   
 
         private void DrawDiagram(Graphics g)
         {
@@ -381,6 +381,13 @@ namespace JH_VisionProject.UIControl
                     g.DrawRectangle(pen, rect);
                 }
             }
+
+            if (_multiSelectedEntities.Count <= 1 && _selEntity != null)
+            {
+                //#11_MATCHING#8 패턴매칭할 영역 표시
+                DrawInspParam(g, _selEntity.LinkedWindow);
+            }
+
 
             //선택 영역 박스 그리기
             if (_isBoxSelecting && !_selectionBox.IsEmpty)
@@ -480,6 +487,46 @@ namespace JH_VisionProject.UIControl
                 g.DrawString(text, font, textBrush, position);
             }
         }
+
+        //#11_MATCHING#9 패턴매칭할 영역 크기 얻는 함수,
+        //이 함수를 사용하는 코드도 참조 확인하여 추가할것
+        public void UpdateInspParam()
+        {
+            _extSize.Width = _extSize.Height = 0;
+
+            if (_selEntity is null)
+                return;
+
+            InspWindow window = _selEntity.LinkedWindow;
+            if (window is null)
+                return;
+
+            MatchAlgorithm matchAlgo = (MatchAlgorithm)window.FindInspAlgorithm(InspectType.InspMatch);
+            if (matchAlgo != null)
+            {
+                _extSize.Width = matchAlgo.ExtSize.Width;
+                _extSize.Height = matchAlgo.ExtSize.Height;
+            }
+        }
+
+        private void DrawInspParam(Graphics g, InspWindow window)
+        {
+            if (_extSize.Width > 0 || _extSize.Height > 0)
+            {
+                Rectangle extArea = new Rectangle(_roiRect.Left - _extSize.Width,
+                    _roiRect.Top - _extSize.Height,
+                    _roiRect.Width + _extSize.Width * 2,
+                    _roiRect.Height + _extSize.Height * 2);
+                Rectangle screenRect = VirtualToScreen(extArea);
+
+                using (Pen pen = new Pen(Color.White, 2))
+                {
+                    pen.DashStyle = DashStyle.Dot;
+                    pen.Width = 2;
+                    g.DrawRectangle(pen, screenRect);
+                }
+            }
+        }   
 
         public Bitmap GetCurBitmap()
         {
@@ -654,6 +701,8 @@ namespace JH_VisionProject.UIControl
                         _roiRect = entity.EntityROI;
                         _isMovingRoi = true;
                         _moveStart = e.Location;
+
+                        UpdateInspParam();
                         break;
                     }
 
@@ -667,6 +716,7 @@ namespace JH_VisionProject.UIControl
                     Invalidate();
                 }
             }
+            // 마우스 오른쪽 버튼이 눌렸을 때 클릭 위치 저장
             else if (e.Button == MouseButtons.Right)
             {
                 // UserControl이 포커스를 받아야 마우스 휠이 정상적으로 동작함

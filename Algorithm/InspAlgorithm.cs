@@ -3,15 +3,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using JH_VisionProject.Core;
 using OpenCvSharp;
 
 
 namespace JH_VisionProject.Algorithm
 {
     public enum InspectType
-    {
+    {   
         InspNone = -1,
         InspBinary,
+        InspMatch,
         InspFilter,
         InspAIModule,
         InspCount
@@ -25,12 +27,14 @@ namespace JH_VisionProject.Algorithm
         // 알고리즘 사용할지 여부 결정
 
         public bool IsUse { get; set; } = true;
-        // 검사가 완료되었는지 여부
+        // 검사가 완료되었는지 판단
         public bool IsInspected { get; set; } = false;
 
         //#8_INSPECT_BINARY#1 검사할 영역 정보를 저장하는 변수
         public Rect TeachRect { get; set; }
         public Rect InspRect { get; set; }
+
+        public eImageChannel ImageChannel { get; set; } = eImageChannel.Gray;
 
         //검사할 원본 이미지
         protected Mat _srcImage = null;

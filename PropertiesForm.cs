@@ -72,6 +72,12 @@ namespace JH_VisionProject
                     //blobProp.PropertyChanged += PropertyChanged;
                     curProp = blobProp;
                     break;
+                //#11_MATCHING#5 패턴매칭 속성창 추가
+                case InspectType.InspMatch:
+                    MatchInspProp matchProp = new MatchInspProp();
+                    matchProp.PropertyChanged += PropertyChanged;
+                    curProp = matchProp;
+                    break;
                 case InspectType.InspFilter:
                     ImageFilterProp filterProp = new ImageFilterProp();
                     curProp = filterProp;
@@ -86,7 +92,6 @@ namespace JH_VisionProject
             }
             return curProp;
         }
-
 
         //#11_MODEL_TREE#3 InspWindow에서 사용하는 알고리즘을 모두 탭에 추가
         public void ShowProperty(InspWindow window)
@@ -119,6 +124,16 @@ namespace JH_VisionProject
                             continue;
 
                         binaryProp.SetAlgorithm(blobAlgo);
+                    }
+                    else if (uc is MatchInspProp matchProp)
+                    {
+                        MatchAlgorithm matchAlgo = (MatchAlgorithm)window.FindInspAlgorithm(InspectType.InspMatch);
+                        if (matchAlgo is null)
+                            continue;
+
+                        window.PatternLearn();
+
+                        matchProp.SetAlgorithm(matchAlgo);
                     }
                 }
             }

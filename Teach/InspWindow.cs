@@ -36,6 +36,44 @@ namespace JH_VisionProject.Teach
 
         public List<InspAlgorithm> AlgorithmList { get; set; } = new List<InspAlgorithm>();
 
+        public List<Mat> _windowImages = new List<Mat>();
+        
+        public void AddWindowImage(Mat image)
+        {
+            if (image is null)
+                return;
+
+            _windowImages.Add(image.Clone());
+        }
+
+        public void ResetWindowImages()
+        {
+            _windowImages.Clear();
+        }
+
+        public void SetWindowImage(Mat image, int index)
+        {
+            if (image is null)
+                return;
+            if (index < 0 || index >= _windowImages.Count)
+                return;
+
+            _windowImages[index] = image.Clone();
+        }
+
+        public void DelWindowImage(int index)
+        {
+            if (index < 0 || index >= _windowImages.Count)
+                return;
+
+            _windowImages.RemoveAt(index);
+
+            IsPatternLearn = false;
+            PatternLearn();
+        }
+
+        public bool IsPatternLearn { get; set; } = false;
+
         public InspWindow()
         {
         }
@@ -61,6 +99,46 @@ namespace JH_VisionProject.Teach
             return cloneWindow;
         }
 
+
+        //#11_MATCHING#2 InspWindow에 있는 템플릿 이미지를 MatchAlgorithm에 등록하는 함수
+        public bool PatternLearn()
+        {
+            if (IsPatternLearn == true)
+                return true;
+
+            foreach (var algorithm in AlgorithmList)
+            {
+                if (algorithm.InspectType != InspectType.InspMatch)
+                    continue;
+
+                MatchAlgorithm matchAlgo = (MatchAlgorithm)algorithm;
+                matchAlgo.ResetTemplateImages();
+
+                for (int i = 0; i < _windowImages.Count; i++)
+                {
+                    Mat tempImage = _windowImages[i];
+                    if (tempImage is null)
+                        continue;
+
+                    if (tempImage.Type() == MatType.CV_8UC3)
+                    {
+                        Mat grayImage = new Mat();
+                        Cv2.CvtColor(tempImage, grayImage, ColorConversionCodes.BGR2GRAY);
+                        matchAlgo.AddTemplateImage(grayImage);
+                    }
+                    else
+                    {
+                        matchAlgo.AddTemplateImage(tempImage);
+                    }
+                }
+            }
+
+            IsPatternLearn = true;
+
+            return true;
+        }
+
+
         //#ABSTRACT ALGORITHM#10 타입에 따라 알고리즘을 추가하는 함수
         public bool AddInspAlgorithm(InspectType inspType)
         {
@@ -70,6 +148,11 @@ namespace JH_VisionProject.Teach
             {
                 case InspectType.InspBinary:
                     inspAlgo = new BlobAlgorithm();
+                    break;
+
+                //#11_MATCHING#3 패턴매칭 알고리즘 추가
+                case InspectType.InspMatch:
+                    inspAlgo = new MatchAlgorithm();
                     break;
             }
 

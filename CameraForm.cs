@@ -102,14 +102,9 @@ namespace JH_VisionProject
             _currentBitmap = (Bitmap)bitmap.Clone();
         }
 
-        public Bitmap GetDisplayImage()
+        public Mat GetDisplayImage()
         {
-            Bitmap curImage = null;
-
-            if (imageViewer != null)
-                curImage = imageViewer.GetCurBitmap();
-
-            return curImage;
+            return Global.Inst.InspStage.ImageSpace.GetMat();
         }
 
         private void imageViewer_Load(object sender, EventArgs e)
@@ -157,6 +152,7 @@ namespace JH_VisionProject
 
         public void UpdateImageViewer()
         {
+            imageViewer.UpdateInspParam();
             imageViewer.Invalidate();
         }
 
