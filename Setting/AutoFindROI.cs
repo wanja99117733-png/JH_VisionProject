@@ -13,14 +13,28 @@ using OpenCvSharp.Extensions;
 
 namespace JH_VisionProject.Setting
 {
+
     public partial class AutoFindROI : UserControl
     {
-        // CameraForm으로 결과 이미지를 보내기 위한 이벤트
+        // 매칭 결과 이미지
         public event Action<Bitmap> ResultImageUpdated;
+        // 찾은 ROI들 (Mat 좌표 기준)
+        public event Action<List<OpenCvSharp.Rect>> RoiFound;
 
         private MatchAlgorithm _matchAlgo;
         private Mat _srcImage;
         private OpenCvSharp.Rect _currentRoi;
+
+        public void SetAlgorithm(MatchAlgorithm matchAlgo)
+        {
+            _matchAlgo = matchAlgo;
+            if (_matchAlgo != null)
+                txtScore.Text = _matchAlgo.MatchScore.ToString();
+        }
+
+        public void SetSourceImage(Mat src) => _srcImage = src;
+
+        public void SetRoi(OpenCvSharp.Rect roi) => _currentRoi = roi;
         public AutoFindROI()
         {
             InitializeComponent();
@@ -31,24 +45,7 @@ namespace JH_VisionProject.Setting
             // 버튼 클릭 시 템플릿 찾기
             btnApply.Click += btnApply_Click;
         }
-        // 외부에서 알고리즘, 이미지, ROI 주입
-        public void SetAlgorithm(MatchAlgorithm matchAlgo)
-        {
-            _matchAlgo = matchAlgo;
-            if (_matchAlgo != null)
-                txtScore.Text = _matchAlgo.MatchScore.ToString();
-        }
-
-        public void SetSourceImage(Mat src)
-        {
-            _srcImage = src;
-        }
-
-        public void SetRoi(OpenCvSharp.Rect roi)
-        {
-            _currentRoi = roi;
-        }
-
+        
 
         private void lbScore_Click(object sender, EventArgs e)
         {
@@ -83,12 +80,10 @@ namespace JH_VisionProject.Setting
 
             _matchAlgo.MatchScore = score;
 
-            // ROI에 대한 템플릿 매칭 수행
             Mat resultMat = RunMatchInRoi(_srcImage, _currentRoi, _matchAlgo);
 
-            // Bitmap으로 변환해서 CameraForm 쪽으로 전달
             Bitmap resultBmp = BitmapConverter.ToBitmap(resultMat);
-            ResultImageUpdated?.Invoke(resultBmp);  
+            ResultImageUpdated?.Invoke(resultBmp);
         }
 
         private void txtScore_Leave(object sender, EventArgs e)
@@ -106,45 +101,40 @@ namespace JH_VisionProject.Setting
             _matchAlgo.MatchScore = score;
         }
 
-        /// <summary>
-        /// ROI 내부에서 템플릿 매칭을 수행하고, 기준 점수 이상 매칭에 사각형을 그린 Mat 반환
-        /// </summary>
         private Mat RunMatchInRoi(Mat src, OpenCvSharp.Rect roiRect, MatchAlgorithm matchAlgo)
         {
-            List<Mat> templates = matchAlgo.GetTemplateImages();
+            var templates = matchAlgo.GetTemplateImages();
             if (templates == null || templates.Count == 0)
             {
                 MessageBox.Show("템플릿 이미지가 없습니다.");
                 return src;
             }
 
-            Mat template = templates[0];
-
-            // 1) 전체 이미지에서 템플릿 매칭 수행
-            //    leftTopPos = (0,0) 으로 해서 결과 좌표가 src 기준이 되게 함
             int count = matchAlgo.MatchTemplateMultiple(
-                            src,                 // 전체 이미지
+                            src,
                             new OpenCvSharp.Point(0, 0),
                             out List<OpenCvSharp.Point> matchedPositions);
 
             Mat drawImg = src.Clone();
-
             if (count <= 0)
                 return drawImg;
 
-            // 2) “표시할 사각형 크기”를 ROI 크기로 사용
             int roiW = roiRect.Width;
             int roiH = roiRect.Height;
 
+            var rois = new List<OpenCvSharp.Rect>();
+
             foreach (var pos in matchedPositions)
             {
-                Console.WriteLine($"MatchPos: X={pos.X}, Y={pos.Y}, W={roiW}, H={roiH}");
-                // pos 는 src 기준의 좌상단 좌표
-                var p1 = pos;
-                var p2 = new OpenCvSharp.Point(pos.X + roiW, pos.Y + roiH);
+                // 기준 ROI 크기를 그대로 사용하되, 위치만 매칭 위치로 이동
+                var rect = new OpenCvSharp.Rect(pos.X, pos.Y, roiW, roiH);
+                rois.Add(rect);
 
-                Cv2.Rectangle(drawImg, p1, p2, Scalar.Lime, 2);
+                Cv2.Rectangle(drawImg, rect, Scalar.Lime, 2);
             }
+
+            // ★ 여기서는 찾은 위치만 알려주고, 기준 WindowArea는 건드리지 않음
+            RoiFound?.Invoke(rois);
 
             return drawImg;
         }

@@ -208,15 +208,22 @@ namespace JH_VisionProject
 
         private void autoTeachingToolStripMenuItem_Click(object sender, EventArgs e)
         {
+
             if (_autoTeachingForm != null && !_autoTeachingForm.IsDisposed)
             {
                 _autoTeachingForm.Activate();
                 return;
             }
 
-            _autoTeachingForm = new AutoTeaching();
+            CameraForm cameraForm = GetDockForm<CameraForm>();
+            if (cameraForm == null)
+            {
+                MessageBox.Show("CameraForm을 찾을 수 없습니다.");
+                return;
+            }
 
-            // 1) 현재 선택된 InspWindow 가져오기
+            _autoTeachingForm = new AutoTeaching(cameraForm);
+
             InspWindow curWindow = Global.Inst.InspStage.CurInspWindow;
 
             MatchAlgorithm matchAlgo = null;
@@ -224,16 +231,13 @@ namespace JH_VisionProject
 
             if (curWindow != null)
             {
-                // 2) 이 윈도우에 붙어 있는 MatchAlgorithm 찾기
                 var algo = curWindow.FindInspAlgorithm(InspectType.InspMatch);
                 matchAlgo = algo as MatchAlgorithm;
 
-                // 3) ROI는 윈도우의 WindowArea 사용
                 var area = curWindow.WindowArea; // System.Drawing.Rectangle
                 roi = new OpenCvSharp.Rect(area.X, area.Y, area.Width, area.Height);
             }
 
-            // 4) 원본 이미지
             Mat src = Global.Inst.InspStage.GetMat();
             if (src == null)
             {
