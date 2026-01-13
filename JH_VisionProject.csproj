@@ -56,6 +56,9 @@
     <Reference Include="MvCameraControl.Net">
       <HintPath>..\..\프로젝트 참조\ExternalLib\Dll\HikRobot\MvCameraControl.Net.dll</HintPath>
     </Reference>
+    <Reference Include="ObjectListView">
+      <HintPath>..\..\프로젝트 참조\ExternalLib\Dll\ObjectListView\ObjectListView.dll</HintPath>
+    </Reference>
     <Reference Include="OpenCvSharp">
       <HintPath>..\..\프로젝트 참조\ExternalLib\Dll\OpenCv\OpenCvSharp.dll</HintPath>
     </Reference>
@@ -94,6 +97,19 @@
     <Compile Include="Algorithm\DrawInspectInfo.cs" />
     <Compile Include="Algorithm\InspAlgorithm.cs" />
     <Compile Include="Algorithm\MatchAlgorithm.cs" />
+    <Compile Include="Inspect\InspResult.cs" />
+    <Compile Include="Setting\AutoFindROI.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Setting\AutoFindROI.Designer.cs">
+      <DependentUpon>AutoFindROI.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Setting\AutoTeaching.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Setting\AutoTeaching.Designer.cs">
+      <DependentUpon>AutoTeaching.cs</DependentUpon>
+    </Compile>
     <Compile Include="CameraForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -126,6 +142,12 @@
     </Compile>
     <Compile Include="ModelTreeForm.Designer.cs">
       <DependentUpon>ModelTreeForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="NewModel.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="NewModel.Designer.cs">
+      <DependentUpon>NewModel.cs</DependentUpon>
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="PropertiesForm.cs">
@@ -232,6 +254,9 @@
     <EmbeddedResource Include="ModelTreeForm.resx">
       <DependentUpon>ModelTreeForm.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="NewModel.resx">
+      <DependentUpon>NewModel.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="PropertiesForm.resx">
       <DependentUpon>PropertiesForm.cs</DependentUpon>
     </EmbeddedResource>
@@ -261,6 +286,12 @@
     </EmbeddedResource>
     <EmbeddedResource Include="RunForm.resx">
       <DependentUpon>RunForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Setting\AutoFindROI.resx">
+      <DependentUpon>AutoFindROI.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Setting\AutoTeaching.resx">
+      <DependentUpon>AutoTeaching.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Setting\CameraSetting.resx">
       <DependentUpon>CameraSetting.cs</DependentUpon>

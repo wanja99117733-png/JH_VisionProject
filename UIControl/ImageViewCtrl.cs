@@ -28,8 +28,24 @@ namespace JH_VisionProject.UIControl
         DeleteList,
         UpdateImage
     }
+
+    //#13_INSP_RESULT#3 검사 양불판정 갯수를 화면에 표시하기 위한 구조체
+    public struct InspectResultCount
+    {
+        public int Total { get; set; }
+        public int OK { get; set; }
+        public int NG { get; set; }
+
+        public InspectResultCount(int _totalCount, int _okCount, int _ngCount)
+        {
+            Total = _totalCount;
+            OK = _okCount;
+            NG = _ngCount;
+        }
+    }
     public partial class ImageViewCtrl : UserControl
     {
+
         //ROI를 추가,수정,삭제 등으로 변경 시, 이벤트 발생
         public event EventHandler<DiagramEntityEventArgs> DiagramEntityEvent;
 
@@ -58,6 +74,11 @@ namespace JH_VisionProject.UIControl
         //#8_INSPECT_BINARY#15 템플릿 매칭 결과 출력을 위해 Rectangle 리스트 변수 설정
         private List<DrawInspectInfo> _rectInfos = new List<DrawInspectInfo>();
 
+        //#13_INSP_RESULT#4 검사 양불 판정 갯수를 화면에 표시하기 위한 변수
+        private InspectResultCount _inspectResultCount = new InspectResultCount();
+
+        
+        private List<DiagramEntity> copyBuffer = new List<DiagramEntity>();
 
         //#10_INSPWINDOW#15 ROI 편집에 필요한 변수 선언
         private Point _roiStart = Point.Empty;
@@ -91,6 +112,13 @@ namespace JH_VisionProject.UIControl
 
         private Size _extSize = new Size(0, 0);
 
+        // ROI 이동용: 이동 시작 시 기준 정보
+        private Rectangle _moveStartRoiRect;                       // 단일 선택용
+        private Dictionary<DiagramEntity, Rectangle> _moveStartRects =
+            new Dictionary<DiagramEntity, Rectangle>();
+        // 다중 선택용
+        private bool _isGroupMove = false;
+
         //팝업 메뉴
         private ContextMenuStrip _contextMenu;
         public ImageViewCtrl()
@@ -106,7 +134,9 @@ namespace JH_VisionProject.UIControl
             _contextMenu.Items.Add("Unlock", null, OnUnlockClicked);
 
             MouseWheel += new MouseEventHandler(ImageViewCCtrl_MouseWheel);
-            
+
+            _moveStartRects = new Dictionary<DiagramEntity, Rectangle>();
+
         }
         //#10_INSPWINDOW#17 InspWindow 타입에 따른, 칼라 정보 얻는 함수
         public Color GetWindowColor(InspWindowType inspWindowType)
@@ -462,6 +492,17 @@ namespace JH_VisionProject.UIControl
                     }
                 }
             }
+
+            //#13_INSP_RESULT#5 검사 양불판정 갯수 화면에 표시
+            if (_inspectResultCount.Total > 0)
+            {
+                string resultText = $"Total: {_inspectResultCount.Total}\r\nOK: {_inspectResultCount.OK}\r\nNG: {_inspectResultCount.NG}";
+
+                float fontSize = 12.0f;
+                Color resultColor = Color.FromArgb(255, 255, 255);
+                PointF textPos = new PointF(Width - 80, 10);
+                DrawText(g, resultText, textPos, fontSize, resultColor);
+            }
         }
 
         private void DrawText(Graphics g, string text, PointF position, float fontSize, Color color)
@@ -629,6 +670,11 @@ namespace JH_VisionProject.UIControl
             _rectInfos.AddRange(rectInfos);
             Invalidate();
         }
+        public void SetInspResultCount(InspectResultCount inspectResultCount)
+        {
+            _inspectResultCount = inspectResultCount;
+        }
+
 
         public void ResetEntity()
         {
@@ -654,10 +700,17 @@ namespace JH_VisionProject.UIControl
                 {
                     if (!_isCtrlPressed && _multiSelectedEntities.Count > 1 && _screenSelectedRect.Contains(e.Location))
                     {
-                        _selEntity = _multiSelectedEntities[0];
                         _isMovingRoi = true;
+                        _isGroupMove = true;          // 그룹 이동 시작
                         _moveStart = e.Location;
-                        _roiRect = _selEntity.EntityROI;
+
+                        // 이동 시작 시점의 각 ROI 원래 위치 저장
+                        _moveStartRects.Clear();
+                        foreach (var ent in _multiSelectedEntities)
+                        {
+                            if (ent == null || ent.IsHold) continue;
+                            _moveStartRects[ent] = ent.EntityROI;
+                        }
                         Invalidate();
                         return;
                     }
@@ -700,7 +753,19 @@ namespace JH_VisionProject.UIControl
                         _selEntity = entity;
                         _roiRect = entity.EntityROI;
                         _isMovingRoi = true;
+                        _isGroupMove = false;              // 단일 이동
                         _moveStart = e.Location;
+
+                        // 단일 이동용 기준 위치 저장
+                        _moveStartRoiRect = _selEntity.EntityROI;
+
+                        // 다중 선택이면서 여기로 들어올 수도 있으니, 그룹용도 준비
+                        _moveStartRects.Clear();
+                        foreach (var ent in _multiSelectedEntities)
+                        {
+                            if (ent == null || ent.IsHold) continue;
+                            _moveStartRects[ent] = ent.EntityROI;
+                        }
 
                         UpdateInspParam();
                         break;
@@ -725,7 +790,6 @@ namespace JH_VisionProject.UIControl
         }
 
         private void ImageViewCtrl_MouseMove(object sender, MouseEventArgs e)
-
         {
             _mousePos = e.Location;
 
@@ -754,34 +818,47 @@ namespace JH_VisionProject.UIControl
                 //ROI 위치 이동
                 else if (_isMovingRoi)
                 {
-                    int dx = e.X - _moveStart.X;
-                    int dy = e.Y - _moveStart.Y;
+                    // 1) 화면 좌표 기준 전체 이동량
+                    int dxScreen = e.X - _moveStart.X;
+                    int dyScreen = e.Y - _moveStart.Y;
 
-                    int dxVirtual = (int)((float)dx / _curZoom + 0.5f);
-                    int dyVirtual = (int)((float)dy / _curZoom + 0.5f);
+                    // 2) Virtual 좌표로 변환 (실수 오차 누적 줄이기)
+                    float dxVirtual = dxScreen / _curZoom;
+                    float dyVirtual = dyScreen / _curZoom;
 
-                    //여러개 선택된 roi 이동
-                    if (_multiSelectedEntities.Count > 1)
+                    // (A) 그룹 이동
+                    if (_isGroupMove && _multiSelectedEntities.Count > 1)
                     {
                         foreach (var entity in _multiSelectedEntities)
                         {
-                            if (entity is null || entity.IsHold)
+                            if (entity == null || entity.IsHold)
                                 continue;
 
-                            Rectangle rect = entity.EntityROI;
-                            rect.X += dxVirtual;
-                            rect.Y += dyVirtual;
-                            entity.EntityROI = rect;
+                            if (!_moveStartRects.TryGetValue(entity, out var baseRect))
+                                continue;
+
+                            Rectangle moved = new Rectangle(
+                                (int)(baseRect.X + dxVirtual),
+                                (int)(baseRect.Y + dyVirtual),
+                                baseRect.Width,
+                                baseRect.Height);
+
+                            entity.EntityROI = moved;
                         }
                     }
+                    // (B) 단일 이동
                     else if (_selEntity != null && !_selEntity.IsHold)
                     {
-                        _roiRect.X += dxVirtual;
-                        _roiRect.Y += dyVirtual;
-                        _selEntity.EntityROI = _roiRect;
+                        Rectangle moved = new Rectangle(
+                            (int)(_moveStartRoiRect.X + dxVirtual),
+                            (int)(_moveStartRoiRect.Y + dyVirtual),
+                            _moveStartRoiRect.Width,
+                            _moveStartRoiRect.Height);
+
+                        _roiRect = moved;
+                        _selEntity.EntityROI = moved;
                     }
 
-                    _moveStart = e.Location;
                     Invalidate();
                 }
                 //ROI 선택 박스 그리기
@@ -863,6 +940,7 @@ namespace JH_VisionProject.UIControl
                 else if (_isMovingRoi)
                 {
                     _isMovingRoi = false;
+                    _isGroupMove = false; 
 
                     if (_selEntity != null)
                     {
@@ -1027,6 +1105,105 @@ namespace JH_VisionProject.UIControl
 
             _roiRect = ScreenToVirtual(roi);
         }
+
+
+        //#13_INSP_RESULT#9 키보드 이벤트 받기 
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            _isCtrlPressed = keyData == Keys.Control;
+
+            if (keyData == (Keys.Control | Keys.C))
+            {
+                CopySelectedROIs();
+            }
+            else if (keyData == (Keys.Control | Keys.V))
+            {
+                PasteROIsAt();
+            }
+            else
+            {
+                switch (keyData)
+                {
+                    case Keys.Delete:
+                        {
+                            if (_selEntity != null)
+                            {
+                                DeleteSelEntity();
+                            }
+                        }
+                        break;
+                    case Keys.Enter:
+                        {
+                            InspWindow selWindow = null;
+                            if (_selEntity != null)
+                                selWindow = _selEntity.LinkedWindow;
+
+                            DiagramEntityEvent?.Invoke(this, new DiagramEntityEventArgs(EntityActionType.Inspect, selWindow));
+                        }
+                        break;
+                }
+            }
+
+            return base.ProcessCmdKey(ref msg, keyData);
+        }
+        // ─── 복사(Ctrl+C) ----------------------------------------------------------
+        private void CopySelectedROIs() // #ROI COPYPASTE#
+        {
+            _copyBuffer.Clear();
+            for (int i = 0; i < _multiSelectedEntities.Count; i++)
+            {
+                _copyBuffer.Add(_multiSelectedEntities[i]);
+            }
+        }
+
+        // ─── 붙여넣기(Ctrl+V) ------------------------------------------------------
+        private void PasteROIsAt() // #ROI COPYPASTE#
+        {
+            if (_copyBuffer == null || _copyBuffer.Count == 0)
+                return;
+
+            var valid = _copyBuffer
+                .Where(e => e != null)
+                .ToList();
+            if (valid.Count == 0)
+                return;
+
+            // 2) 그룹 기준점(왼쪽 위)을 구함
+            int anchorX = valid.Min(e => e.EntityROI.Left);
+            int anchorY = valid.Min(e => e.EntityROI.Top);
+
+            // ① 기준점(마우스)을 Virtual 좌표로 변환
+            PointF virtBase = ScreenToVirtual(_mousePos);
+
+            // 4) 그룹 전체를 얼마만큼 평행 이동할지 계산
+            int dx = (int)(virtBase.X - anchorX + 0.5f);
+            int dy = (int)(virtBase.Y - anchorY + 0.5f);
+
+            // 5) 모든 ROI에 동일한 dx, dy 적용 → 상대 위치 유지
+            foreach (var entity in valid)
+            {
+                var srcRect = entity.EntityROI; // 원본 위치
+
+                DiagramEntityEvent?.Invoke(
+                    this,
+                    new DiagramEntityEventArgs(
+                        EntityActionType.Copy,
+                        entity.LinkedWindow,
+                        entity.LinkedWindow?.InspWindowType ?? InspWindowType.None,
+                        srcRect,
+                        new Point(dx, dy)));  // 전체 그룹을 같이 이동
+            }
+            Invalidate();
+        }
+
+        protected override void OnKeyUp(KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Control)
+                _isCtrlPressed = false;
+
+            base.OnKeyUp(e);
+        }
+
 
         //#10_INSPWINDOW#20 모델로 부터, 입력된 ROI 리스트를 설정하는 함수
         public bool SetDiagramEntityList(List<DiagramEntity> diagramEntityList)

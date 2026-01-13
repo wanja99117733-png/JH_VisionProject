@@ -7,14 +7,19 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using JH_VisionProject.Algorithm;
 using JH_VisionProject.Core;
 using JH_VisionProject.Setting;
+using JH_VisionProject.Teach;
+using OpenCvSharp;
 using WeifenLuo.WinFormsUI.Docking;
 
 namespace JH_VisionProject
 {
     public partial class MainForm : Form
     {
+        private AutoTeaching _autoTeachingForm;
+
         private static DockPanel _dockPanel;    // 도킹패널 멤버변수 선언
         public MainForm()
         {
@@ -52,13 +57,17 @@ namespace JH_VisionProject
             var cameraWindow = new CameraForm();
             cameraWindow.Show(_dockPanel, DockState.Document);
 
-            //메인폼 설정
-            var runWindow = new RunForm();
-            runWindow.Show(cameraWindow.Pane, DockAlignment.Bottom, 0.3);
+            //#13_INSP_RESULT#7 검사 결과창 30% 비율로 추가
+            var resultWindow = new ResultForm();
+            resultWindow.Show(cameraWindow.Pane, DockAlignment.Bottom, 0.3);
 
-            //#11_MODEL_TREE#1 검사 결과창 우측에 40% 비율로 모델트리 추가
+            //# MODEL TREE#3 검사 결과창 우측에 40% 비율로 모델트리 추가
             var modelTreeWindow = new ModelTreeForm();
-            modelTreeWindow.Show(runWindow.Pane, DockAlignment.Right, 0.3);
+            modelTreeWindow.Show(resultWindow.Pane, DockAlignment.Right, 0.4);
+
+            //실행창 추가
+            var runWindow = new RunForm();
+            runWindow.Show(modelTreeWindow.Pane, null);
 
             //속성창 추가
             var propWindow = new PropertiesForm();
@@ -123,6 +132,118 @@ namespace JH_VisionProject
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
             Global.Inst.Dispose();
+        }
+
+
+        //#12_MODEL SAVE#3 모델 파일 열기,저장, 다른 이름으로 저장 기능 구현
+        private string GetMdoelTitle(Model curModel)
+        {
+            if (curModel is null)
+                return "";
+
+            string modelName = curModel.ModelName;
+            return $"{Define.PROGRAM_NAME} - MODEL : {modelName}";
+        }
+
+        private void modelNewMenuItem_Click(object sender, EventArgs e)
+        {
+            //신규 모델 추가를 위한 모델 정보를 받기 위한 창 띄우기
+            NewModel newModel = new NewModel();
+            newModel.ShowDialog();
+
+            Model curModel = Global.Inst.InspStage.CurModel;
+            if (curModel != null)
+            {
+                this.Text = GetMdoelTitle(curModel);
+            }
+        }
+
+        private void modelOpenMenuItem_Click(object sender, EventArgs e)
+        {
+            //모델 파일 열기
+            using (OpenFileDialog openFileDialog = new OpenFileDialog())
+            {
+                openFileDialog.Title = "모델 파일 선택";
+                openFileDialog.Filter = "Model Files|*.xml;";
+                openFileDialog.Multiselect = false;
+                openFileDialog.InitialDirectory = SettingXml.Inst.ModelDir;
+                if (openFileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    string filePath = openFileDialog.FileName;
+                    if (Global.Inst.InspStage.LoadModel(filePath))
+                    {
+                        Model curModel = Global.Inst.InspStage.CurModel;
+                        if (curModel != null)
+                        {
+                            this.Text = GetMdoelTitle(curModel);
+                        }
+                    }
+                }
+            }
+        }
+
+        private void modelSaveMenuItem_Click(object sender, EventArgs e)
+        {
+            //모델 파일 저장
+            Global.Inst.InspStage.SaveModel("");
+        }
+
+        private void modelSaveAsMenuItem_Click(object sender, EventArgs e)
+        {
+            //다른이름으로 모델 파일 저장
+            using (SaveFileDialog saveFileDialog = new SaveFileDialog())
+            {
+                saveFileDialog.InitialDirectory = SettingXml.Inst.ModelDir;
+                saveFileDialog.Title = "모델 파일 선택";
+                saveFileDialog.Filter = "Model Files|*.xml;";
+                saveFileDialog.DefaultExt = "xml";
+
+                if (saveFileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    string filePath = saveFileDialog.FileName;
+                    Global.Inst.InspStage.SaveModel(filePath);
+                }
+            }
+        }
+
+        private void autoTeachingToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (_autoTeachingForm != null && !_autoTeachingForm.IsDisposed)
+            {
+                _autoTeachingForm.Activate();
+                return;
+            }
+
+            _autoTeachingForm = new AutoTeaching();
+
+            // 1) 현재 선택된 InspWindow 가져오기
+            InspWindow curWindow = Global.Inst.InspStage.CurInspWindow;
+
+            MatchAlgorithm matchAlgo = null;
+            OpenCvSharp.Rect roi = new OpenCvSharp.Rect(0, 0, 0, 0);
+
+            if (curWindow != null)
+            {
+                // 2) 이 윈도우에 붙어 있는 MatchAlgorithm 찾기
+                var algo = curWindow.FindInspAlgorithm(InspectType.InspMatch);
+                matchAlgo = algo as MatchAlgorithm;
+
+                // 3) ROI는 윈도우의 WindowArea 사용
+                var area = curWindow.WindowArea; // System.Drawing.Rectangle
+                roi = new OpenCvSharp.Rect(area.X, area.Y, area.Width, area.Height);
+            }
+
+            // 4) 원본 이미지
+            Mat src = Global.Inst.InspStage.GetMat();
+            if (src == null)
+            {
+                MessageBox.Show("원본 이미지가 없습니다.");
+                _autoTeachingForm.Show(this);
+                return;
+            }
+
+            _autoTeachingForm.InitForTeach(matchAlgo, src, roi);
+            _autoTeachingForm.Show(this);
         }
     }
 }

@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using JH_VisionProject.Algorithm;
 using JH_VisionProject.Core;
+using JH_VisionProject.Setting;
 using JH_VisionProject.Teach;
 using JH_VisionProject.UIControl;
 using OpenCvSharp;
@@ -23,11 +24,15 @@ namespace JH_VisionProject
     {
         private string _currentImagePath;
         private Bitmap _currentBitmap;
+
         public CameraForm()
         {
             InitializeComponent();
             //#10_INSPWINDOW#23 ImageViewCtrl에서 발생하는 이벤트 처리
             imageViewer.DiagramEntityEvent += ImageViewer_DiagramEntityEvent;
+
+            var auto = new AutoFindROI();
+            auto.ResultImageUpdated += AutoFindROI_ResultImageUpdated;
         }
 
         private void ImageViewer_DiagramEntityEvent(object sender, DiagramEntityEventArgs e)
@@ -37,10 +42,18 @@ namespace JH_VisionProject
                 case EntityActionType.Select:
                     Global.Inst.InspStage.SelectInspWindow(e.InspWindow);
                     imageViewer.Focus();
+
+                    // ROI 자동 전달
+                    UpdateAutoFindRoiFromWindow(e.InspWindow);
+                    break;
+
                     break;
                 case EntityActionType.Inspect:
                     UpdateDiagramEntity();
                     Global.Inst.InspStage.TryInspection(e.InspWindow);
+
+                    // 검사 버튼(Inspect)로 선택했을 때도 ROI 전달
+                    UpdateAutoFindRoiFromWindow(e.InspWindow);
                     break;
                 case EntityActionType.Add:
                     Global.Inst.InspStage.AddInspWindow(e.WindowType, e.Rect);
@@ -69,6 +82,39 @@ namespace JH_VisionProject
         {
 
         }
+        private void UpdateAutoFindRoiFromWindow(InspWindow window)
+        {
+            var auto = new AutoFindROI();
+
+            if (window == null)
+                return;
+
+            // InspWindow.WindowArea 는 System.Drawing.Rectangle 이므로
+            var area = window.WindowArea;
+
+            // AutoFindROI.SetRoi는 OpenCvSharp.Rect 사용
+            var roi = new OpenCvSharp.Rect(area.X, area.Y, area.Width, area.Height);
+
+            // CameraForm 위에 올라가 있는 AutoFindROI 인스턴스에 전달
+            auto.SetRoi(roi);
+
+            // 필요하다면, 원본 Mat도 같이 넘겨줌
+            var mat = Global.Inst.InspStage.GetMat();   // 이미 CameraForm에서 사용 중인 패턴[file:44]
+            auto.SetSourceImage(mat);
+        }
+        private void AutoFindROI_ResultImageUpdated(Bitmap resultBmp)
+        {
+            if (resultBmp == null)
+                return;
+
+            // imageViewer에 표시
+            imageViewer.LoadBitmap(resultBmp);   // CameraForm.UpdateDisplay와 같은 방식[file:44]
+
+            // 필요하면 현재 비트맵으로 캐싱
+            _currentBitmap?.Dispose();
+            _currentBitmap = (Bitmap)resultBmp.Clone();
+        }
+
         public void UpdateDisplay(Bitmap bitmap = null)
         {
             if (bitmap == null)
@@ -172,6 +218,12 @@ namespace JH_VisionProject
         public void AddRoi(InspWindowType inspWindowType)
         {
             imageViewer.NewRoi(inspWindowType);
+        }
+
+        //#13_INSP_RESULT#6 검사 양불판정 갯수 설정 함수
+        public void SetInspResultCount(int totalArea, int okCnt, int ngCnt)
+        {
+            imageViewer.SetInspResultCount(new InspectResultCount(totalArea, okCnt, ngCnt));
         }
     }
 }

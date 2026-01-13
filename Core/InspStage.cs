@@ -15,6 +15,7 @@ using OpenCvSharp.Extensions;
 using JH_VisionProject.Setting;
 using JH_VisionProject.Teach;
 using System.Runtime.InteropServices;
+using System.IO;
 
 namespace JH_VisionProject.Core
 {
@@ -150,6 +151,8 @@ namespace JH_VisionProject.Core
         //크기가 다를때, 이미지 버퍼를 다시 설정한 후, 이미지 로딩하는 함수
         public void SetImageBuffer(string filePath)
         {
+            Console.Write($"Load Image : {filePath}");
+
             Mat matImage = Cv2.ImRead(filePath);
 
             int pixelBpp = 8;
@@ -178,6 +181,8 @@ namespace JH_VisionProject.Core
                 }
             }
 
+            SetBuffer(1);
+
             int bufferIndex = 0;
 
             // Mat의 데이터를 byte 배열로 복사
@@ -195,6 +200,28 @@ namespace JH_VisionProject.Core
             }
         }
 
+        public void CheckImageBuffer()
+        {
+            if (_grabManager != null && SettingXml.Inst.CamType != CameraType.None)
+            {
+                int imageWidth;
+                int imageHeight;
+                int imageStride;
+                _grabManager.GetResolution(out imageWidth, out imageHeight, out imageStride);
+
+                if (_imageSpace.ImageSize.Width != imageWidth || _imageSpace.ImageSize.Height != imageHeight)
+                {
+                    int pixelBpp = 8;
+                    _grabManager.GetPixelBpp(out pixelBpp);
+
+                    _imageSpace.SetImageInfo(pixelBpp, imageWidth, imageHeight, imageStride);
+                    SetBuffer(_imageSpace.BufferCount);
+                }
+            }
+        }
+
+
+        //#10_INSPWINDOW#11 속성창 업데이트 기준을 알고리즘에서 InspWindow로 변경
         private void UpdateProperty(InspWindow inspWindow)
         {
             if (inspWindow is null)
@@ -303,6 +330,8 @@ namespace JH_VisionProject.Core
 
             UpdateDiagramEntity();
 
+            inspWindow.ResetInspResult();
+
             List<DrawInspectInfo> totalArea = new List<DrawInspectInfo>();
 
             Rect windowArea = inspWindow.WindowArea;
@@ -316,40 +345,50 @@ namespace JH_VisionProject.Core
                 inspAlgo.TeachRect = windowArea;
                 inspAlgo.InspRect = windowArea;
 
+                Mat srcImage = Global.Inst.InspStage.GetMat();
+                inspAlgo.SetInspData(srcImage);
+
+                if (!inspAlgo.DoInspect())
+                    continue;
+
+                List<DrawInspectInfo> resultArea = new List<DrawInspectInfo>();
+                int resultCnt = inspAlgo.GetResultRect(out resultArea);
+                if (resultCnt > 0)
+                {
+                    totalArea.AddRange(resultArea);
+                }
+
                 InspectType inspType = inspAlgo.InspectType;
+
+                string resultInfo = string.Join("\r\n", inspAlgo.ResultString);
+
+                InspResult inspResult = new InspResult
+                {
+                    ObjectID = inspWindow.UID,
+                    InspType = inspAlgo.InspectType,
+                    IsDefect = inspAlgo.IsDefect,
+                    ResultInfos = resultInfo
+                };
 
                 switch (inspType)
                 {
+                    case InspectType.InspMatch:
+                        {
+                            MatchAlgorithm matchAlgo = inspAlgo as MatchAlgorithm;
+                            inspResult.ResultValue = $"{matchAlgo.OutScore}";
+                            break;
+                        }
                     case InspectType.InspBinary:
                         {
                             BlobAlgorithm blobAlgo = (BlobAlgorithm)inspAlgo;
-
-                            Mat srcImage = Global.Inst.InspStage.GetMat();
-                            blobAlgo.SetInspData(srcImage);
-
-                            if (blobAlgo.DoInspect())
-                            {
-                                List<DrawInspectInfo> resultArea = new List<DrawInspectInfo>();
-                                int resultCnt = blobAlgo.GetResultRect(out resultArea);
-                                if (resultCnt > 0)
-                                {
-                                    totalArea.AddRange(resultArea);
-                                }
-                            }
-
+                            int min = blobAlgo.BlobFilters[blobAlgo.FILTER_COUNT].min;
+                            int max = blobAlgo.BlobFilters[blobAlgo.FILTER_COUNT].max;
+                            inspResult.ResultValue = $"{blobAlgo.OutBlobCount}/{min}~{max}";
                             break;
                         }
                 }
 
-                if (inspAlgo.DoInspect())
-                {
-                    List<DrawInspectInfo> resultArea = new List<DrawInspectInfo>();
-                    int resultCnt = inspAlgo.GetResultRect(out resultArea);
-                    if (resultCnt > 0)
-                    {
-                        totalArea.AddRange(resultArea);
-                    }
-                }
+                inspWindow.AddInspResult(inspResult);
             }
 
             if (totalArea.Count > 0)
@@ -361,7 +400,14 @@ namespace JH_VisionProject.Core
                     cameraForm.AddRect(totalArea);
                 }
             }
+
+            ResultForm resultForm = MainForm.GetDockForm<ResultForm>();
+            if (resultForm != null)
+            {
+                resultForm.AddWindowResult(inspWindow);
+            }
         }
+
         //#10_INSPWINDOW#13 ImageViewCtrl에서 ROI 생성,수정,이동,선택 등에 대한 함수
         public void SelectInspWindow(InspWindow inspWindow)
         {
@@ -587,6 +633,44 @@ namespace JH_VisionProject.Core
             }
         }
 
+        //#12_MODEL SAVE#4 Mainform에서 호출되는 모델 열기와 저장 함수
+        public bool LoadModel(string filePath)
+        {
+            Console.Write($"모델 로딩:{filePath}");
+
+            _model = _model.Load(filePath);
+
+            if (_model is null)
+            {
+                Console.Write($"모델 로딩 실패 : {filePath}");
+                return false;
+            }
+
+            string inspImagePath = _model.InspectImagePath;
+            if (File.Exists(inspImagePath))
+            {
+                Global.Inst.InspStage.SetImageBuffer(inspImagePath);
+            }
+
+            UpdateDiagramEntity();
+
+            return true;
+        }
+        public void SaveModel(string filePath)
+        {
+            Console.Write($"모델 저장:{filePath}");
+
+            //입력 경로가 없으면 현재 모델 저장
+            if (string.IsNullOrEmpty(filePath))
+                Global.Inst.InspStage.CurModel.Save();
+            else
+                Global.Inst.InspStage.CurModel.SaveAs(filePath);
+        }
+        // InspStage 클래스 내부, CurModel 프로퍼티 근처에 추가
+        public InspWindow CurInspWindow
+        {
+            get => _selectedInspWindow;
+        }
 
         #region Disposable
 

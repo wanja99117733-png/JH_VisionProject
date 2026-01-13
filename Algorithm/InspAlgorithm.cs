@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Serialization;
 using JH_VisionProject.Core;
 using OpenCvSharp;
 
@@ -18,6 +19,12 @@ namespace JH_VisionProject.Algorithm
         InspAIModule,
         InspCount
     }
+
+    //#12_MODEL SAVE#7 Xml Serialize를 위해서, 아래 코드 추가
+    //XmlSerialize는 추상화된 상태를 알수 없어, 상속된 클래스를 명시적으로 포함해야 함.
+    [XmlInclude(typeof(MatchAlgorithm))]
+    [XmlInclude(typeof(BlobAlgorithm))]
+
     //추상화 클래스
     public abstract class InspAlgorithm
     {
