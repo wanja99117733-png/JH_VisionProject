@@ -13,6 +13,7 @@ using JH_VisionProject.Core;
 using JH_VisionProject.Setting;
 using JH_VisionProject.Teach;
 using JH_VisionProject.UIControl;
+using JH_VisionProject.Utill;
 using OpenCvSharp;
 using WeifenLuo.WinFormsUI.Docking;
 
@@ -37,6 +38,7 @@ namespace JH_VisionProject
 
         private void ImageViewer_DiagramEntityEvent(object sender, DiagramEntityEventArgs e)
         {
+            SLogger.Write($"ImageViewer Action {e.ActionType.ToString()}");
             switch (e.ActionType)
             {
                 case EntityActionType.Select:

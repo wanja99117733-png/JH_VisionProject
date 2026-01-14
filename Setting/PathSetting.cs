@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using JH_VisionProject.Utill;
 
 namespace JH_VisionProject.Setting
 {
@@ -35,6 +36,8 @@ namespace JH_VisionProject.Setting
 
             //환경설정 저장
             SettingXml.Save();
+
+            SLogger.Write($"경로 설정 저장");
         }
 
         private void btnSelModelDir_Click_1(object sender, EventArgs e)

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using JH_VisionProject.Utill;
 using OpenCvSharp;
 
 namespace JH_VisionProject.Grab
@@ -47,10 +48,10 @@ namespace JH_VisionProject.Grab
                     {
                         Marshal.Copy(_frame.Data, _userImageBuffer[BufferIndex].ImageBuffer, 0, bufSize); // Mat의 데이터를 byte 배열로 복사
                     }
-                    //else
-                    //{
-                    //    SLogger.Write("Error: Buffer size is too small.", SLogger.LogType.Error);
-                    //}
+                    else
+                    {
+                        SLogger.Write("Error: Buffer size is too small.", SLogger.LogType.Error);
+                    }
                 }
 
                 OnTransferCompleted(BufferIndex);

@@ -11,6 +11,7 @@ using JH_VisionProject.Algorithm;
 using JH_VisionProject.Core;
 using JH_VisionProject.Setting;
 using JH_VisionProject.Teach;
+using JH_VisionProject.Utill;
 using OpenCvSharp;
 using WeifenLuo.WinFormsUI.Docking;
 
@@ -73,6 +74,10 @@ namespace JH_VisionProject
             var propWindow = new PropertiesForm();
             propWindow.Show(_dockPanel, DockState.DockRight);
 
+            //#14_LOGFORM#2 로그창 추가
+            var logwindow = new LogForm();
+            logwindow.Show(propWindow.Pane, DockAlignment.Bottom, 0.3);
+
         }
         //제네릭 함수 사용을 이용해 입력된 타입의 폼 객체 얻기
         
@@ -115,6 +120,7 @@ namespace JH_VisionProject
 
         private void setupToolStripMenuItem1_Click(object sender, EventArgs e)
         {
+            SLogger.Write($"환경설정창 열기");
             SetupForm setupForm = new SetupForm();
             setupForm.ShowDialog();
         }

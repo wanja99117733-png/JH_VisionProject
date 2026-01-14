@@ -5,6 +5,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using JH_VisionProject.Utill;
 using MvCameraControl;
 
 namespace JH_VisionProject.Grab
@@ -64,7 +65,8 @@ namespace JH_VisionProject.Grab
 
         internal bool InitGrab()
         {
-            {
+            
+                SLogger.Write("Grab 초기화 시작!");
                 if (!Create())
                     return false;
 
@@ -74,8 +76,9 @@ namespace JH_VisionProject.Grab
                         return false;
                 }
 
+                SLogger.Write("Grab 초기화 성공!");
                 return true;
-            }
+            
         }
         internal bool InitBuffer(int bufferCount = 1)
         {

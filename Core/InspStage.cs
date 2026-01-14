@@ -16,6 +16,7 @@ using JH_VisionProject.Setting;
 using JH_VisionProject.Teach;
 using System.Runtime.InteropServices;
 using System.IO;
+using JH_VisionProject.Utill;
 
 namespace JH_VisionProject.Core
 {
@@ -80,6 +81,7 @@ namespace JH_VisionProject.Core
 
         public bool Initialize()
         {
+            SLogger.Write("InspStage 초기화!");
             _imageSpace = new ImageSpace();
 
             //#7_BINARY_PREVIEW#3 이진화 알고리즘과 프리뷰 변수 인스턴스 생성\
@@ -151,7 +153,7 @@ namespace JH_VisionProject.Core
         //크기가 다를때, 이미지 버퍼를 다시 설정한 후, 이미지 로딩하는 함수
         public void SetImageBuffer(string filePath)
         {
-            Console.Write($"Load Image : {filePath}");
+            SLogger.Write($"Load Image : {filePath}");
 
             Mat matImage = Cv2.ImRead(filePath);
 
@@ -275,7 +277,7 @@ namespace JH_VisionProject.Core
             if (inspWindow.WindowArea.Right >= curImage.Width ||
                 inspWindow.WindowArea.Bottom >= curImage.Height)
             {
-                Console.Write("ROI 영역이 잘못되었습니다!");
+                SLogger.Write("ROI 영역이 잘못되었습니다!");
                 return;
             }
 
@@ -314,6 +316,8 @@ namespace JH_VisionProject.Core
                         i);
                 }
             }
+
+            SLogger.Write("버퍼 초기화 성공!");
         }
 
 
@@ -546,7 +550,7 @@ namespace JH_VisionProject.Core
         private async void _multiGrab_TransferCompleted(object sender, object e)
         {
             int bufferIndex = (int)e;
-            Console.WriteLine($"_multiGrab_TransferCompleted {bufferIndex}");
+            SLogger.Write($"TransferCompleted {bufferIndex}");
 
             _imageSpace.Split(bufferIndex);
 
@@ -562,6 +566,7 @@ namespace JH_VisionProject.Core
             //이 함수는 await를 사용하여 비동기적으로 실행되어, 함수를 async로 선언해야 합니다.
             if (LiveMode)
             {
+                SLogger.Write("Grab");
                 await Task.Delay(10);  // 비동기 대기
                 _grabManager.Grab(bufferIndex, true);  // 다음 촬영 시작
             }
@@ -636,13 +641,13 @@ namespace JH_VisionProject.Core
         //#12_MODEL SAVE#4 Mainform에서 호출되는 모델 열기와 저장 함수
         public bool LoadModel(string filePath)
         {
-            Console.Write($"모델 로딩:{filePath}");
+            SLogger.Write($"모델 로딩:{filePath}");
 
             _model = _model.Load(filePath);
 
             if (_model is null)
             {
-                Console.Write($"모델 로딩 실패 : {filePath}");
+                SLogger.Write($"모델 로딩 실패 : {filePath}");
                 return false;
             }
 
@@ -658,7 +663,7 @@ namespace JH_VisionProject.Core
         }
         public void SaveModel(string filePath)
         {
-            Console.Write($"모델 저장:{filePath}");
+            SLogger.Write($"모델 저장:{filePath}");
 
             //입력 경로가 없으면 현재 모델 저장
             if (string.IsNullOrEmpty(filePath))

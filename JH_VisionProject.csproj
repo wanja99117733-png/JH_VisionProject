@@ -53,6 +53,9 @@
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="log4net">
+      <HintPath>..\..\프로젝트 참조\ExternalLib\Dll\Log4Net\log4net.dll</HintPath>
+    </Reference>
     <Reference Include="MvCameraControl.Net">
       <HintPath>..\..\프로젝트 참조\ExternalLib\Dll\HikRobot\MvCameraControl.Net.dll</HintPath>
     </Reference>
@@ -65,12 +68,13 @@
     <Reference Include="OpenCvSharp.Extensions">
       <HintPath>..\..\프로젝트 참조\ExternalLib\Dll\OpenCv\OpenCvSharp.Extensions.dll</HintPath>
     </Reference>
-    <Reference Include="SaigeVision.Net.Core.V2, Version=2.5.0.0, Culture=neutral, processorArchitecture=AMD64">
-      <SpecificVersion>False</SpecificVersion>
+    <Reference Include="OpenCvSharp.WpfExtensions">
+      <HintPath>..\..\library\OpenCvSharp.WpfExtensions.dll</HintPath>
+    </Reference>
+    <Reference Include="SaigeVision.Net.Core.V2">
       <HintPath>..\..\프로젝트 참조\ExternalLib\Dll\Saige\SaigeVision.Net.Core.V2.dll</HintPath>
     </Reference>
-    <Reference Include="SaigeVision.Net.V2, Version=2.5.0.0, Culture=neutral, processorArchitecture=AMD64">
-      <SpecificVersion>False</SpecificVersion>
+    <Reference Include="SaigeVision.Net.V2">
       <HintPath>..\..\프로젝트 참조\ExternalLib\Dll\Saige\SaigeVision.Net.V2.dll</HintPath>
     </Reference>
     <Reference Include="System" />
@@ -241,6 +245,7 @@
       <DependentUpon>RangeTrackbar.cs</DependentUpon>
     </Compile>
     <Compile Include="Utill\BitmapExtension.cs" />
+    <Compile Include="Utill\SLogger.cs" />
     <Compile Include="Utill\XmlHelper.cs" />
     <EmbeddedResource Include="CameraForm.resx">
       <DependentUpon>CameraForm.cs</DependentUpon>
