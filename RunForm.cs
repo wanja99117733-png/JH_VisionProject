@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using JH_VisionProject.Core;
+using JH_VisionProject.Setting;
 using WeifenLuo.WinFormsUI.Docking;
 
 namespace JH_VisionProject
@@ -38,7 +39,20 @@ namespace JH_VisionProject
 
         private void btnStart_Click(object sender, EventArgs e)
         {
-            Global.Inst.InspStage.TryInspection();
+            //#15_INSP_WORKER#10 카메라 타입에 따라 자동 검사 모드 설정
+
+            string serialID = $"{DateTime.Now:MM-dd HH:mm:ss}";
+            Global.Inst.InspStage.InspectReady("LOT_NUMBER", serialID);
+
+            if (SettingXml.Inst.CamType == Grab.CameraType.None)
+            {
+                bool cycleMode = SettingXml.Inst.CycleMode;
+                Global.Inst.InspStage.CycleInspect(cycleMode);
+            }
+            else
+            {
+                Global.Inst.InspStage.StartAutoRun();
+            }
         }
 
         private void checkBox1_CheckedChanged(object sender, EventArgs e)

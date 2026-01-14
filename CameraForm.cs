@@ -26,14 +26,52 @@ namespace JH_VisionProject
         private string _currentImagePath;
         private Bitmap _currentBitmap;
 
+        // ★ AutoFindROI를 필드로 유지
+        private AutoFindROI _autoFindRoi;
+
         public CameraForm()
         {
             InitializeComponent();
-            //#10_INSPWINDOW#23 ImageViewCtrl에서 발생하는 이벤트 처리
+
             imageViewer.DiagramEntityEvent += ImageViewer_DiagramEntityEvent;
 
-            var auto = new AutoFindROI();
-            auto.ResultImageUpdated += AutoFindROI_ResultImageUpdated;
+            // ★ AutoFindROI 인스턴스를 필드로 생성
+            _autoFindRoi = new AutoFindROI();
+            _autoFindRoi.ResultImageUpdated += AutoFindROI_ResultImageUpdated;
+            _autoFindRoi.RoiFound += AutoFindROI_RoiFound;   // ★ 찾은 ROI를 받는 이벤트 핸들러
+        }
+
+        private void AutoFindROI_RoiFound(List<OpenCvSharp.Rect> rois)
+        {
+            if (rois == null || rois.Count == 0)
+                return;
+
+            // 기존 모델 기반 ROI는 건드리지 않고,
+            // "찾은 ROI들만" 임시로 표시하고 싶다면 별 리스트로 관리해야 함.
+            // 여기서는 간단하게: 찾은 ROI들을 DiagramEntity로 만들어 imageViewer에 뿌리는 예를 보여줌.
+
+            List<DiagramEntity> foundEntities = new List<DiagramEntity>();
+
+            foreach (var r in rois)
+            {
+                var rect = new Rectangle(r.X, r.Y, r.Width, r.Height);
+
+                DiagramEntity entity = new DiagramEntity()
+                {
+                    LinkedWindow = null,  // 아직 모델에 붙이진 않은 상태라면 null
+                    EntityROI = rect,
+                    EntityColor = Color.Lime,   // AutoFind 결과 표시용 색
+                    IsHold = false
+                };
+
+                foundEntities.Add(entity);
+            }
+
+            // 1) 기존 모델 ROI도 같이 보이고 싶다면:
+            //    - Model에서 만든 DiagramEntity 리스트 + foundEntities를 합쳐서 SetDiagramEntityList에 넣어주면 된다.
+            // 2) 지금은 "찾은 ROI들만" 간단히 덮어쓰는 예시:
+
+            imageViewer.SetDiagramEntityList(foundEntities);
         }
 
         private void ImageViewer_DiagramEntityEvent(object sender, DiagramEntityEventArgs e)
@@ -86,23 +124,27 @@ namespace JH_VisionProject
         }
         private void UpdateAutoFindRoiFromWindow(InspWindow window)
         {
-            var auto = new AutoFindROI();
+            if (_autoFindRoi == null)
+                return;
 
             if (window == null)
                 return;
 
-            // InspWindow.WindowArea 는 System.Drawing.Rectangle 이므로
+            // 1) 선택된 윈도우의 ROI를 AutoFindROI에 전달
             var area = window.WindowArea;
-
-            // AutoFindROI.SetRoi는 OpenCvSharp.Rect 사용
             var roi = new OpenCvSharp.Rect(area.X, area.Y, area.Width, area.Height);
+            _autoFindRoi.SetRoi(roi);
 
-            // CameraForm 위에 올라가 있는 AutoFindROI 인스턴스에 전달
-            auto.SetRoi(roi);
+            // 2) 원본 Mat도 같이 전달 (채널 없이 전체 이미지)
+            Mat mat = Global.Inst.InspStage.GetMat();  // 이미 다른 곳에서 쓰는 패턴과 동일
+            _autoFindRoi.SetSourceImage(mat);
 
-            // 필요하다면, 원본 Mat도 같이 넘겨줌
-            var mat = Global.Inst.InspStage.GetMat();   // 이미 CameraForm에서 사용 중인 패턴[file:44]
-            auto.SetSourceImage(mat);
+            // 3) 매칭 알고리즘 인스턴스도 넘겨주기
+            MatchAlgorithm matchAlgo = window.FindInspAlgorithm(InspectType.InspMatch) as MatchAlgorithm;
+            if (matchAlgo != null)
+            {
+                _autoFindRoi.SetAlgorithm(matchAlgo);
+            }
         }
         private void AutoFindROI_ResultImageUpdated(Bitmap resultBmp)
         {

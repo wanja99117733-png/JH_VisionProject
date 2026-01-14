@@ -170,6 +170,13 @@ namespace JH_VisionProject.UIControl
 
         public void LoadBitmap(Bitmap bitmap)
         {
+            //#15_INSP_WORKER#9 스레드에서 검사시, 멈추는 현상 방지
+            if (this.InvokeRequired)
+            {
+                this.BeginInvoke(new Action<Bitmap>(LoadBitmap), bitmap);
+                return;
+            }
+
             if (bitmap == null)
                 return; // 또는 throw new ArgumentNullException(nameof(bitmap));
 

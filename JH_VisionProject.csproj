@@ -101,7 +101,9 @@
     <Compile Include="Algorithm\DrawInspectInfo.cs" />
     <Compile Include="Algorithm\InspAlgorithm.cs" />
     <Compile Include="Algorithm\MatchAlgorithm.cs" />
+    <Compile Include="Inspect\InspectBoard.cs" />
     <Compile Include="Inspect\InspResult.cs" />
+    <Compile Include="Inspect\InspWorker.cs" />
     <Compile Include="Setting\AutoFindROI.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -245,6 +247,8 @@
       <DependentUpon>RangeTrackbar.cs</DependentUpon>
     </Compile>
     <Compile Include="Utill\BitmapExtension.cs" />
+    <Compile Include="Utill\ImageFIleSorter.cs" />
+    <Compile Include="Utill\ImageLoader.cs" />
     <Compile Include="Utill\SLogger.cs" />
     <Compile Include="Utill\XmlHelper.cs" />
     <EmbeddedResource Include="CameraForm.resx">

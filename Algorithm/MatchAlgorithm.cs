@@ -119,15 +119,22 @@ namespace JH_VisionProject.Algorithm
         /// <summary>
         /// 여러 개의 매칭 위치 찾기 (임계값 이상인 경우)
         /// </summary>
-        public int MatchTemplateMultiple(Mat image, Point leftTopPos, out List<Point> matchedPositions)
+        public int MatchTemplateMultiple(
+                     Mat image,
+                    Point leftTopPos,
+                    out List<Point> matchedPositions,
+                    out List<float> matchedScores)
         {
             if (_templateImages.Count <= 0)
             {
                 matchedPositions = new List<Point>();
+                matchedScores = new List<float>();
                 return 0;
             }
 
             matchedPositions = new List<Point>();
+            matchedScores = new List<float>();
+
             float matchThreshold = MatchScore / 100.0f;
             Mat result = new Mat();
 
@@ -223,6 +230,7 @@ namespace JH_VisionProject.Algorithm
                     //Point matchPos = new Point(bestPoint.X + templateWidth, bestPoint.Y + templateHeight);
                     Point matchPos = bestPoint + leftTopPos;
                     matchedPositions.Add(matchPos);
+                    matchedScores.Add(score);
                     detectedRegions.Add(new Rect(bestPoint.X - halfWidth, bestPoint.Y - halfHeight, templateWidth, templateHeight));
                 }
             }
@@ -287,7 +295,12 @@ namespace JH_VisionProject.Algorithm
             else
             {
                 List<Point> outPoints = new List<Point>();
-                int matchCount = MatchTemplateMultiple(targetImage, ExtArea.TopLeft, out outPoints);
+                List<float> outScores = new List<float>();
+                int matchCount = MatchTemplateMultiple(
+                                    targetImage,
+                                    ExtArea.TopLeft,
+                                    out outPoints,
+                                    out outScores);
                 if (matchCount <= 0)
                     return false;
 

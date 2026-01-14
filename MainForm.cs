@@ -44,6 +44,9 @@ namespace JH_VisionProject
             LoadDockingWindow();
 
             Global.Inst.InspStage.Initialize();  // 전역변수로 선언된 InspStage의 Initialize함수 호출
+
+            //#15_INSP_WORKER#2 연속 검사 모드 설정값 로딩
+            LoadSetting();
         }
         /*
          * DockState     = _dockPanel에 직접 위치를 정할때
@@ -79,8 +82,13 @@ namespace JH_VisionProject
             logwindow.Show(propWindow.Pane, DockAlignment.Bottom, 0.3);
 
         }
+
+        private void LoadSetting()
+        {
+            cycleModeMenuItem.Checked = SettingXml.Inst.CycleMode;
+        }
         //제네릭 함수 사용을 이용해 입력된 타입의 폼 객체 얻기
-        
+
         public static T GetDockForm<T>() where T : DockContent
         {
             var findForm = _dockPanel.Contents.OfType<T>().FirstOrDefault();
@@ -254,6 +262,14 @@ namespace JH_VisionProject
 
             _autoTeachingForm.InitForTeach(matchAlgo, src, roi);
             _autoTeachingForm.Show(this);
+        }
+
+        //#15_INSP_WORKER#3 Cycle 모드 설정
+        private void cycleModeMenuItem_Click(object sender, EventArgs e)
+        {
+            // 현재 체크 상태 확인
+            bool isChecked = cycleModeMenuItem.Checked;
+            SettingXml.Inst.CycleMode = isChecked;
         }
     }
 }

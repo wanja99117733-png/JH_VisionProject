@@ -11,7 +11,8 @@ namespace JH_VisionProject.Core
         None = 0,
         Base,
         Body,
-        Sub
+        Sub,
+        ID
     }
     public enum DecisionType
     {

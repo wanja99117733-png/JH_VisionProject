@@ -333,7 +333,7 @@ namespace JH_VisionProject.Grab
             int result = _device.Parameters.SetFloatValue("Gain", gain);
             if (result != MvError.MV_OK)
             {
-                Console.WriteLine("Set Gain Fail", result);
+                SLogger.Write($"Set Gain Fail:{result:x8}", SLogger.LogType.Error);
                 return false;
             }
             return true;

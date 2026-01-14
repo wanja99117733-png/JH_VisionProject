@@ -111,10 +111,12 @@ namespace JH_VisionProject.Setting
             }
 
             int count = matchAlgo.MatchTemplateMultiple(
-                            src,
-                            new OpenCvSharp.Point(0, 0),
-                            out List<OpenCvSharp.Point> matchedPositions);
+                src,
+                new OpenCvSharp.Point(0, 0),
+                out List<OpenCvSharp.Point> matchedPositions,
+                out List<float> matchedScores);
 
+            // 더 이상 박스를 그리지 않을 거면, 그냥 원본 복사만
             Mat drawImg = src.Clone();
             if (count <= 0)
                 return drawImg;
@@ -124,18 +126,20 @@ namespace JH_VisionProject.Setting
 
             var rois = new List<OpenCvSharp.Rect>();
 
-            foreach (var pos in matchedPositions)
+            for (int i = 0; i < matchedPositions.Count; i++)
             {
-                // 기준 ROI 크기를 그대로 사용하되, 위치만 매칭 위치로 이동
+                var pos = matchedPositions[i];
                 var rect = new OpenCvSharp.Rect(pos.X, pos.Y, roiW, roiH);
                 rois.Add(rect);
 
-                Cv2.Rectangle(drawImg, rect, Scalar.Lime, 2);
+                // ★ 여기서는 아무 것도 그리지 않음
+                // (그리기는 ImageViewCtrl에서 DiagramEntity로 처리)
             }
 
-            // ★ 여기서는 찾은 위치만 알려주고, 기준 WindowArea는 건드리지 않음
+            // 찾은 ROI들만 알려주고,
             RoiFound?.Invoke(rois);
 
+            // drawImg는 화면에 띄울 이미지 (필요하면 다른 가공만 추가)
             return drawImg;
         }
     }
