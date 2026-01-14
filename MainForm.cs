@@ -265,7 +265,8 @@ namespace JH_VisionProject
         }
 
         //#15_INSP_WORKER#3 Cycle 모드 설정
-        private void cycleModeMenuItem_Click(object sender, EventArgs e)
+        
+        private void cycleModeMenuItem_Click_1(object sender, EventArgs e)
         {
             // 현재 체크 상태 확인
             bool isChecked = cycleModeMenuItem.Checked;

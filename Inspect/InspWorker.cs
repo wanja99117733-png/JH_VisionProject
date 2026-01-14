@@ -48,7 +48,7 @@ namespace JH_VisionProject.Inspect
 
         private void InspectionLoop(InspWorker inspWorker, CancellationToken token)
         {
-            Global.Inst.InspStage.SetWorkingState(WorkingState.INSPECT);
+            //Global.Inst.InspStage.SetWorkingState(WorkingState.INSPECT);
 
             SLogger.Write("InspectionLoop Start");
 

@@ -700,7 +700,7 @@ namespace JH_VisionProject.Core
             if (_inspWorker != null)
                 _inspWorker.Stop();
 
-            SetWorkingState(WorkingState.NONE);
+            //SetWorkingState(WorkingState.NONE);
         }
 
         public bool VirtualGrab()
@@ -752,7 +752,7 @@ namespace JH_VisionProject.Core
             LiveMode = false;
             UseCamera = SettingXml.Inst.CamType != CameraType.None ? true : false;
 
-            SetWorkingState(WorkingState.INSPECT);
+            //SetWorkingState(WorkingState.INSPECT);
 
             return true;
         }

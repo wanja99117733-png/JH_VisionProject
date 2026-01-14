@@ -22,19 +22,9 @@ namespace JH_VisionProject
 
         private void btnGrab_Click(object sender, EventArgs e)
         {
+            //#13_SET_IMAGE_BUFFER#3 그랩시 이미지 버퍼를 먼저 설정하도록 변경
+            Global.Inst.InspStage.CheckImageBuffer();
             Global.Inst.InspStage.Grab(0);
-        }
-
-        private void btnLive_Click(object sender, EventArgs e)
-        {
-            /*
-            Global.Inst.InspStage.LiveMode = !Global.Inst.InspStage.LiveMode;
-
-            if (Global.Inst.InspStage.LiveMode)
-            {
-                Global.Inst.InspStage.Grab(0);
-            }
-            */
         }
 
         private void btnStart_Click(object sender, EventArgs e)
@@ -63,6 +53,11 @@ namespace JH_VisionProject
             {
                 Global.Inst.InspStage.Grab(0);
             }
+        }
+
+        private void btnStop_Click(object sender, EventArgs e)
+        {
+            Global.Inst.InspStage.StopCycle();
         }
     }
 }

@@ -31,6 +31,7 @@
             this.btnGrab = new System.Windows.Forms.Button();
             this.btnStart = new System.Windows.Forms.Button();
             this.checkBox1 = new System.Windows.Forms.CheckBox();
+            this.btnStop = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // btnGrab
@@ -64,11 +65,22 @@
             this.checkBox1.UseVisualStyleBackColor = true;
             this.checkBox1.CheckedChanged += new System.EventHandler(this.checkBox1_CheckedChanged);
             // 
+            // btnStop
+            // 
+            this.btnStop.Location = new System.Drawing.Point(380, 12);
+            this.btnStop.Name = "btnStop";
+            this.btnStop.Size = new System.Drawing.Size(178, 83);
+            this.btnStop.TabIndex = 4;
+            this.btnStop.Text = "중단";
+            this.btnStop.UseVisualStyleBackColor = true;
+            this.btnStop.Click += new System.EventHandler(this.btnStop_Click);
+            // 
             // RunForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(10F, 18F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
+            this.Controls.Add(this.btnStop);
             this.Controls.Add(this.checkBox1);
             this.Controls.Add(this.btnStart);
             this.Controls.Add(this.btnGrab);
@@ -84,5 +96,6 @@
         private System.Windows.Forms.Button btnGrab;
         private System.Windows.Forms.Button btnStart;
         private System.Windows.Forms.CheckBox checkBox1;
+        private System.Windows.Forms.Button btnStop;
     }
 }

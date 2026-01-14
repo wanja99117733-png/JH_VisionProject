@@ -157,6 +157,7 @@
             this.cycleModeMenuItem.Name = "cycleModeMenuItem";
             this.cycleModeMenuItem.Size = new System.Drawing.Size(270, 34);
             this.cycleModeMenuItem.Text = "Cycle Mode";
+            this.cycleModeMenuItem.Click += new System.EventHandler(this.cycleModeMenuItem_Click_1);
             // 
             // MainForm
             // 
