@@ -49,9 +49,18 @@ namespace JH_VisionProject
         {
             Global.Inst.InspStage.LiveMode = !Global.Inst.InspStage.LiveMode;
 
+            //#17_WORKING_STATE#6 LIVE 상태 화면 표시
             if (Global.Inst.InspStage.LiveMode)
             {
+                Global.Inst.InspStage.SetWorkingstate(WorkingState.LIVE);
+
+                //#13_SET_IMAGE_BUFFER#4 그랩시 이미지 버퍼를 먼저 설정하도록 변경
+                Global.Inst.InspStage.CheckImageBuffer();
                 Global.Inst.InspStage.Grab(0);
+            }
+            else
+            {
+                Global.Inst.InspStage.SetWorkingstate(WorkingState.NONE);
             }
         }
 

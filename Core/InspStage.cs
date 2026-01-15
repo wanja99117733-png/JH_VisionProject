@@ -115,6 +115,8 @@ namespace JH_VisionProject.Core
             _inspWorker = new InspWorker();
             _imageLoader = new ImageLoader();
 
+            //#16_LAST_MODELOPEN#2 REGISTRY 키 생성
+            _regKey = Registry.CurrentUser.CreateSubKey("Software\\JH_VisionProject");
 
             //#10_INSPWINDOW#10 모델 인스턴스 생성
             _model = new Model();
@@ -142,6 +144,12 @@ namespace JH_VisionProject.Core
                 _grabManager.TransferCompleted += _multiGrab_TransferCompleted;
 
                 InitModelGrab(MAX_GRAB_BUF);
+            }
+
+            //#16_LAST_MODELOPEN#5 마지막 모델 열기 여부 확인
+            if (!LastestModelOpen())
+            {
+                MessageBox.Show("모델 열기 실패!");
             }
 
             return true;
@@ -615,6 +623,9 @@ namespace JH_VisionProject.Core
 
             UpdateDiagramEntity();
 
+            //#16_LAST_MODELOPEN#2 REGISTRY 키 생성
+            _regKey = Registry.CurrentUser.CreateSubKey("Software\\JidamVision");
+
             return true;
         }
         public void SaveModel(string filePath)
@@ -763,6 +774,15 @@ namespace JH_VisionProject.Core
             get => _selectedInspWindow;
         }
 
+        //#17_WORKING_STATE#2 작업 상태 설정
+        public void SetWorkingstate(WorkingState workingState)
+        {
+            var cameraForm = MainForm.GetDockForm<CameraForm>();
+            if (cameraForm != null)
+            {
+                cameraForm.SetWorkState(workingState);
+            }
+        }
         #region Disposable
 
         private bool disposed = false; // to detect redundant calls
@@ -784,6 +804,9 @@ namespace JH_VisionProject.Core
                         _grabManager.Dispose();
                         _grabManager = null;
                     }
+
+                    //#16_LAST_MODELOPEN#4 registry 키를 닫습니다.
+                    _regKey.Close();
                 }
 
                 // Dispose unmanaged managed resources.

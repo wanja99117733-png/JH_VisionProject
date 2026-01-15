@@ -6,6 +6,15 @@ using System.Threading.Tasks;
 
 namespace JH_VisionProject.Core
 {
+    public enum InspectType
+    {
+        InspNone = -1,
+        InspBinary,
+        InspMatch,
+        InspFilter,
+        InspAIModule,
+        InspCount
+    }
     public enum InspWindowType
     {
         None = 0,
@@ -22,6 +31,15 @@ namespace JH_VisionProject.Core
         Info,
         Error,          //오류
         Timeout         //타임아웃
+    }
+    
+    //#17_WORKING_STATE#1 작업 상태 정의
+    public enum WorkingState
+    {
+        NONE = 0,
+        INSPECT,
+        LIVE,
+        ALARM
     }
 
     public static class Define
