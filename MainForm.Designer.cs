@@ -55,7 +55,7 @@
             this.inspectToolStripMenuItem});
             this.mainMenu.Location = new System.Drawing.Point(0, 0);
             this.mainMenu.Name = "mainMenu";
-            this.mainMenu.Size = new System.Drawing.Size(1116, 36);
+            this.mainMenu.Size = new System.Drawing.Size(1116, 33);
             this.mainMenu.TabIndex = 0;
             this.mainMenu.Text = "menuStrip1";
             // 
@@ -70,7 +70,7 @@
             this.imageOpenToolStripMenuItem,
             this.imageSaveToolStripMenuItem});
             this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
-            this.fileToolStripMenuItem.Size = new System.Drawing.Size(55, 32);
+            this.fileToolStripMenuItem.Size = new System.Drawing.Size(55, 29);
             this.fileToolStripMenuItem.Text = "File";
             this.fileToolStripMenuItem.Click += new System.EventHandler(this.fileToolStripMenuItem_Click);
             // 
@@ -126,7 +126,7 @@
             this.setupToolStripMenuItem1,
             this.autoTeachingToolStripMenuItem});
             this.setupToolStripMenuItem.Name = "setupToolStripMenuItem";
-            this.setupToolStripMenuItem.Size = new System.Drawing.Size(75, 32);
+            this.setupToolStripMenuItem.Size = new System.Drawing.Size(75, 29);
             this.setupToolStripMenuItem.Text = "Setup";
             this.setupToolStripMenuItem.Click += new System.EventHandler(this.setupToolStripMenuItem_Click);
             // 
@@ -149,11 +149,12 @@
             this.inspectToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.cycleModeMenuItem});
             this.inspectToolStripMenuItem.Name = "inspectToolStripMenuItem";
-            this.inspectToolStripMenuItem.Size = new System.Drawing.Size(87, 32);
+            this.inspectToolStripMenuItem.Size = new System.Drawing.Size(87, 29);
             this.inspectToolStripMenuItem.Text = "Inspect";
             // 
             // cycleModeMenuItem
             // 
+            this.cycleModeMenuItem.CheckOnClick = true;
             this.cycleModeMenuItem.Name = "cycleModeMenuItem";
             this.cycleModeMenuItem.Size = new System.Drawing.Size(270, 34);
             this.cycleModeMenuItem.Text = "Cycle Mode";

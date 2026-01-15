@@ -49,6 +49,7 @@
             this.cbCameraType.Name = "cbCameraType";
             this.cbCameraType.Size = new System.Drawing.Size(175, 26);
             this.cbCameraType.TabIndex = 1;
+            this.cbCameraType.SelectedIndexChanged += new System.EventHandler(this.cbCameraType_SelectedIndexChanged);
             // 
             // btnApply
             // 

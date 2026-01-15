@@ -59,5 +59,10 @@ namespace JH_VisionProject.Setting
         {
             SaveSetting();
         }
+
+        private void cbCameraType_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
+        }
     }
 }

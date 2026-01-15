@@ -181,6 +181,9 @@ namespace JH_VisionProject.Core
 
             SetBuffer(bufferCount);
 
+            //#18_IMAGE_CHANNEL#7 카메라 칼라 여부에 따라, 기본 채널 설정
+            eImageChannel imageChannel = (pixelBpp == 24) ? eImageChannel.Color : eImageChannel.Gray;
+            SetImageChannel(imageChannel);
             //_grabManager.SetExposureTime(25000);
 
         }
@@ -330,6 +333,11 @@ namespace JH_VisionProject.Core
             MatchAlgorithm matchAlgo = (MatchAlgorithm)inspWindow.FindInspAlgorithm(InspectType.InspMatch);
             if (matchAlgo != null)
             {
+                //#18_IMAGE_CHANNEL#8 패턴매칭 이미지 채널 설정, 칼라인 경우 그레이로 변경
+                matchAlgo.ImageChannel = SelImageChannel;
+                if (matchAlgo.ImageChannel == eImageChannel.Color)
+                    matchAlgo.ImageChannel = eImageChannel.Gray;
+
                 UpdateProperty(inspWindow);
             }
         }
@@ -545,14 +553,35 @@ namespace JH_VisionProject.Core
                 cameraForm.UpdateDisplay(bitmap);
             }
         }
+        //#18_IMAGE_CHANNEL#6 프리뷰 이미지 채널을 설정하는 함수
+        public void SetPreviewImage(eImageChannel channel)
+        {
+            if (_previewImage is null)
+                return;
+
+            Bitmap bitmap = ImageSpace.GetBitmap(0, channel);
+            _previewImage.SetImage(BitmapConverter.ToMat(bitmap));
+
+            SetImageChannel(channel);
+        }
+
+        //#18_IMAGE_CHANNEL#5 이미지 채널을 설정하는 함수
+        public void SetImageChannel(eImageChannel channel)
+        {
+            var cameraForm = MainForm.GetDockForm<CameraForm>();
+            if (cameraForm != null)
+            {
+                cameraForm.SetImageChannel(channel);
+            }
+        }
 
 
-        public Bitmap GetBitmap(int bufferIndex = -1)
+        public Bitmap GetBitmap(int bufferIndex = -1, eImageChannel imageChannel = eImageChannel.None)
         {
             if (Global.Inst.InspStage.ImageSpace is null)
                 return null;
 
-            return Global.Inst.InspStage.ImageSpace.GetBitmap();
+            return Global.Inst.InspStage.ImageSpace.GetBitmap(SelBufferIndex, SelImageChannel);
         }
 
         //#7_BINARY_PREVIEW#4 이진화 프리뷰를 위해, ImageSpace에서 이미지 가져오기
@@ -780,7 +809,7 @@ namespace JH_VisionProject.Core
             var cameraForm = MainForm.GetDockForm<CameraForm>();
             if (cameraForm != null)
             {
-                cameraForm.SetWorkState(workingState);
+                cameraForm.SetWorkingState(workingState);
             }
         }
         #region Disposable

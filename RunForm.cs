@@ -39,6 +39,15 @@ namespace JH_VisionProject
                 bool cycleMode = SettingXml.Inst.CycleMode;
                 Global.Inst.InspStage.CycleInspect(cycleMode);
             }
+            else if (SettingXml.Inst.CamType != Grab.CameraType.None)
+            {
+                MessageBox.Show(
+                "카메라 타입이 맞지 않습니다.\n다시 확인해주세요.",
+                "카메라 타입 오류",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning
+                );
+            }
             else
             {
                 Global.Inst.InspStage.StartAutoRun();

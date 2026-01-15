@@ -41,8 +41,7 @@ namespace JH_VisionProject.Setting
             {
                 _setting = XmlHelper.LoadXml<SettingXml>(settingFilePath);
             }
-
-            if (_setting is null)
+            if (_setting == null)
             {
                 _setting = CreateDefaultInstance();
             }

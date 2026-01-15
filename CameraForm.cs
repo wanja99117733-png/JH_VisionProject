@@ -23,6 +23,10 @@ namespace JH_VisionProject
 
     public partial class CameraForm : DockContent
     {
+        //#18_IMAGE_CHANNEL#3 현재 선택된 이미지 채널을 저장하는 변수
+        //_currentImageChannel 변수 모두 찾아서, 관련 코드 수정할것
+        eImageChannel _currentImageChannel = eImageChannel.Gray;
+
         private string _currentImagePath;
         private Bitmap _currentBitmap;
 
@@ -39,6 +43,9 @@ namespace JH_VisionProject
             _autoFindRoi = new AutoFindROI();
             _autoFindRoi.ResultImageUpdated += AutoFindROI_ResultImageUpdated;
             _autoFindRoi.RoiFound += AutoFindROI_RoiFound;   // ★ 찾은 ROI를 받는 이벤트 핸들러
+
+            //#18_IMAGE_CHANNEL#1 메인툴바 이벤트 처리
+            mainViewToolbar1.ButtonChanged += Toolbar_ButtonChanged;
         }
 
         private void AutoFindROI_RoiFound(List<OpenCvSharp.Rect> rois)
@@ -85,8 +92,6 @@ namespace JH_VisionProject
 
                     // ROI 자동 전달
                     UpdateAutoFindRoiFromWindow(e.InspWindow);
-                    break;
-
                     break;
                 case EntityActionType.Inspect:
                     UpdateDiagramEntity();
@@ -164,7 +169,7 @@ namespace JH_VisionProject
             if (bitmap == null)
             {
                 //#6_INSP_STAGE#3 업데이트시 bitmap이 없다면 InspSpace에서 가져온다
-                bitmap = Global.Inst.InspStage.GetBitmap(0);
+                bitmap = Global.Inst.InspStage.GetBitmap(0, _currentImageChannel);
                 if (bitmap == null)
                     return;
             }
@@ -194,7 +199,7 @@ namespace JH_VisionProject
 
         public Mat GetDisplayImage()
         {
-            return Global.Inst.InspStage.ImageSpace.GetMat();
+            return Global.Inst.InspStage.ImageSpace.GetMat(0, _currentImageChannel);
         }
 
         private void imageViewer_Load(object sender, EventArgs e)
@@ -204,7 +209,13 @@ namespace JH_VisionProject
 
         private void CameraForm_Resize(object sender, EventArgs e)
         {
+            //#18_IMAGE_CHANNEL#4 메인툴바 너비를 제외하고 이미지 뷰어의 크기를 조정
 
+            int margin = 0;
+            imageViewer.Width = this.Width - mainViewToolbar1.Width - margin * 2;
+            imageViewer.Height = this.Height - margin * 2;
+
+            imageViewer.Location = new System.Drawing.Point(margin, margin);
         }
 
         //#10_INSPWINDOW#23 모델 정보를 이용해, ROI 갱신
@@ -294,5 +305,45 @@ namespace JH_VisionProject
             imageViewer.Invalidate();
         }
 
+
+        //#18_IMAGE_CHANNEL#2 메인툴바의 버튼 이벤트를 처리하는 함수
+        private void Toolbar_ButtonChanged(object sender, ToolbarEventArgs e)
+        {
+            switch (e.Button)
+            {
+                case ToolbarButton.ShowROI:
+                    if (e.IsChecked)
+                        UpdateDiagramEntity();
+                    else
+                        imageViewer.ResetEntity();
+                    break;
+                case ToolbarButton.ChannelColor:
+                    _currentImageChannel = eImageChannel.Color;
+                    UpdateDisplay();
+                    break;
+                case ToolbarButton.ChannelGray:
+                    _currentImageChannel = eImageChannel.Gray;
+                    UpdateDisplay();
+                    break;
+                case ToolbarButton.ChannelRed:
+                    _currentImageChannel = eImageChannel.Red;
+                    UpdateDisplay();
+                    break;
+                case ToolbarButton.ChannelGreen:
+                    _currentImageChannel = eImageChannel.Green;
+                    UpdateDisplay();
+                    break;
+                case ToolbarButton.ChannelBlue:
+                    _currentImageChannel = eImageChannel.Blue;
+                    UpdateDisplay();
+                    break;
+            }
+        }
+
+        public void SetImageChannel(eImageChannel channel)
+        {
+            mainViewToolbar1.SetSelectButton(channel);
+            UpdateDisplay();
+        }
     }
 }
