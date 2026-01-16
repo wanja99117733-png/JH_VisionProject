@@ -35,10 +35,10 @@
             // mainViewToolbar1
             // 
             this.mainViewToolbar1.Dock = System.Windows.Forms.DockStyle.Right;
-            this.mainViewToolbar1.Location = new System.Drawing.Point(687, 0);
+            this.mainViewToolbar1.Location = new System.Drawing.Point(732, 0);
             this.mainViewToolbar1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             this.mainViewToolbar1.Name = "mainViewToolbar1";
-            this.mainViewToolbar1.Size = new System.Drawing.Size(113, 450);
+            this.mainViewToolbar1.Size = new System.Drawing.Size(68, 450);
             this.mainViewToolbar1.TabIndex = 1;
             // 
             // imageViewer
@@ -60,6 +60,7 @@
             this.Controls.Add(this.imageViewer);
             this.Name = "CameraForm";
             this.Text = "CameraForm";
+            this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.CameraForm_FormClosed);
             this.Load += new System.EventHandler(this.CameraForm_Load);
             this.Resize += new System.EventHandler(this.CameraForm_Resize);
             this.ResumeLayout(false);

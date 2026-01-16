@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -76,7 +77,7 @@ namespace JH_VisionProject.Inspect
                 return false;
 
             //ID 윈도우가 매칭알고리즘이 있고, 검사가 되었다면, 오프셋을 얻는다.
-            Point alignOffset = new Point(0, 0);
+            OpenCvSharp.Point alignOffset = new OpenCvSharp.Point(0, 0);
             InspWindow idWindow = windowList.Find(w => w.InspWindowType == Core.InspWindowType.ID);
             if (idWindow != null)
             {

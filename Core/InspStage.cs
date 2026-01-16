@@ -26,7 +26,7 @@ namespace JH_VisionProject.Core
     //검사와 관련된 클래스를 관리하는 클래스
     public class InspStage : IDisposable
     {
-        public static readonly int MAX_GRAB_BUF = 5;
+        public static readonly int MAX_GRAB_BUF = 1;
 
         private ImageSpace _imageSpace = null;
 
@@ -38,7 +38,6 @@ namespace JH_VisionProject.Core
         SaigeAI _saigeAI; // SaigeAI 인스턴스
 
         //#7_BINARY_PREVIEW#1 이진화 프리뷰에 필요한 변수 선언
-        BlobAlgorithm _blobAlgorithm = null; // Blob 알고리즘 인스턴스
         private PreviewImage _previewImage = null;
 
         //#10_INSPWINDOW#8 모델과 선택된 ROI 윈도우 변수 선언
@@ -120,9 +119,6 @@ namespace JH_VisionProject.Core
 
             //#10_INSPWINDOW#10 모델 인스턴스 생성
             _model = new Model();
-
-            //#9_SETUP#2 환경설정에서 설정값 가져오기
-            LoadSetting();
 
             switch (_camType)
             {
@@ -223,8 +219,6 @@ namespace JH_VisionProject.Core
                 }
             }
 
-            SetBuffer(1);
-
             int bufferIndex = 0;
 
             // Mat의 데이터를 byte 배열로 복사
@@ -234,12 +228,6 @@ namespace JH_VisionProject.Core
             _imageSpace.Split(bufferIndex);
 
             DisplayGrabImage(bufferIndex);
-
-            if (_previewImage != null)
-            {
-                Bitmap bitmap = ImageSpace.GetBitmap(0);
-                _previewImage.SetImage(BitmapConverter.ToMat(bitmap));
-            }
         }
 
         public void CheckImageBuffer()
@@ -477,28 +465,6 @@ namespace JH_VisionProject.Core
             UpdateDiagramEntity();
         }
 
-        //검사된 알고리즘이 가지고 있는 검사 결과 정보를 화면에 출력
-        private bool DisplayResult()
-        {
-            if (_blobAlgorithm is null)
-                return false;
-
-            List<DrawInspectInfo> resultArea = new List<DrawInspectInfo>();
-            int resultCnt = _blobAlgorithm.GetResultRect(out resultArea);
-            if (resultCnt > 0)
-            {
-                //찾은 위치를 이미지상에서 표시
-                var cameraForm = MainForm.GetDockForm<CameraForm>();
-                if (cameraForm != null)
-                {
-                    cameraForm.ResetDisplay();
-                    cameraForm.AddRect(resultArea);
-                }
-            }
-
-            return true;
-        }
-
         public bool Grab(int bufferIndex)
         {
             if (_grabManager == null)
@@ -519,12 +485,6 @@ namespace JH_VisionProject.Core
             _imageSpace.Split(bufferIndex);
 
             DisplayGrabImage(bufferIndex);
-
-            if (_previewImage != null)
-            {
-                Bitmap bitmap = ImageSpace.GetBitmap(0);    //프리뷰용은 0번 버퍼 사용
-                _previewImage.SetImage(BitmapConverter.ToMat(bitmap));  //현재 이미지로 프리뷰 이미지 갱신
-            }
 
             //#8_LIVE#2 LIVE 모드일때, Grab을 계속 실행하여, 반복되도록 구현
             //이 함수는 await를 사용하여 비동기적으로 실행되어, 함수를 async로 선언해야 합니다.
@@ -578,6 +538,13 @@ namespace JH_VisionProject.Core
 
         public Bitmap GetBitmap(int bufferIndex = -1, eImageChannel imageChannel = eImageChannel.None)
         {
+            if (bufferIndex >= 0)
+                SelBufferIndex = bufferIndex;
+
+            //#BINARY FILTER#13 채널 정보가 유지되도록, eImageChannel.None 타입을 추가
+            if (imageChannel != eImageChannel.None)
+                SelImageChannel = imageChannel;
+
             if (Global.Inst.InspStage.ImageSpace is null)
                 return null;
 
@@ -652,8 +619,8 @@ namespace JH_VisionProject.Core
 
             UpdateDiagramEntity();
 
-            //#16_LAST_MODELOPEN#2 REGISTRY 키 생성
-            _regKey = Registry.CurrentUser.CreateSubKey("Software\\JidamVision");
+            //#16_LAST_MODELOPEN#3 마지막 저장 모델 경로를 레지스트리에 저장
+            _regKey.SetValue("LastestModelPath", filePath);
 
             return true;
         }
@@ -740,7 +707,7 @@ namespace JH_VisionProject.Core
             if (_inspWorker != null)
                 _inspWorker.Stop();
 
-            //SetWorkingState(WorkingState.NONE);
+            SetWorkingstate(WorkingState.NONE);
         }
 
         public bool VirtualGrab()
@@ -792,7 +759,7 @@ namespace JH_VisionProject.Core
             LiveMode = false;
             UseCamera = SettingXml.Inst.CamType != CameraType.None ? true : false;
 
-            //SetWorkingState(WorkingState.INSPECT);
+            SetWorkingstate(WorkingState.INSPECT);
 
             return true;
         }

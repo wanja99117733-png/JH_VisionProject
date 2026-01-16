@@ -185,13 +185,15 @@ namespace JH_VisionProject.UIControl
                 return;
             }
 
+            if (bitmap == null)
+                return; // 또는 throw new ArgumentNullException(nameof(bitmap));
+
             // 기존에 로드된 이미지가 있다면 해제 후 초기화, 메모리누수 방지
             if (_bitmapImage != null)
             {
                 //이미지 크기가 같다면, 이미지 변경 후, 화면 갱신
                 if (_bitmapImage.Width == bitmap.Width && _bitmapImage.Height == bitmap.Height)
                 {
-                    _bitmapImage.Dispose();   // 기존 이미지 해제 후 교체
                     _bitmapImage = bitmap;
                     Invalidate();
                     return;
@@ -532,7 +534,7 @@ namespace JH_VisionProject.UIControl
 
                 float fontSize = 12.0f;
                 Color resultColor = Color.FromArgb(255, 255, 255);
-                PointF textPos = new PointF(Width - 180, 10);
+                PointF textPos = new PointF(Width - 80, 10);
                 DrawText(g, resultText, textPos, fontSize, resultColor);
             }
         }

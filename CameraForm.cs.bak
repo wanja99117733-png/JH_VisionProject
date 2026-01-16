@@ -37,9 +37,6 @@ namespace JH_VisionProject
         {
             InitializeComponent();
 
-            this.FormClosed += CameraForm_FormClosed;
-
-            //#10_INSPWINDOW#23 ImageViewCtrl에서 발생하는 이벤트 처리
             imageViewer.DiagramEntityEvent += ImageViewer_DiagramEntityEvent;
 
             // ★ AutoFindROI 인스턴스를 필드로 생성
@@ -123,7 +120,8 @@ namespace JH_VisionProject
                     break;
             }
         }
-        
+        public string CurrentImagePath => _currentImagePath;
+        public Bitmap CurrentBitmap => _currentBitmap;
 
         private void CameraForm_Load(object sender, EventArgs e)
         {
@@ -185,17 +183,15 @@ namespace JH_VisionProject
             Global.Inst.InspStage.PreView.SetImage(curImage);
         }
 
-        public void LoadImage(string filePath)
+        public void LoadImage(string filename)
         {
-            if (File.Exists(filePath) == false)
+            if (File.Exists(filename) == false)
                 return;
 
-            //#4_IMAGE_VIEWER#6 이미지 뷰어 컨트롤을 사용하여 이미지를 로드
-            //picMainview.Image = Image.FromFile(filePath);
-            Image bitmap = Image.FromFile(filePath);
+            Image bitmap = Image.FromFile(filename);
             imageViewer.LoadBitmap((Bitmap)bitmap);
 
-            _currentImagePath = filePath;
+            _currentImagePath = filename;
 
             _currentBitmap?.Dispose();
             _currentBitmap = (Bitmap)bitmap.Clone();
@@ -348,15 +344,6 @@ namespace JH_VisionProject
         {
             mainViewToolbar1.SetSelectButton(channel);
             UpdateDisplay();
-        }
-
-        private void CameraForm_FormClosed(object sender, FormClosedEventArgs e)
-        {
-            mainViewToolbar1.ButtonChanged -= Toolbar_ButtonChanged;
-
-            imageViewer.DiagramEntityEvent -= ImageViewer_DiagramEntityEvent;
-
-            this.FormClosed -= CameraForm_FormClosed;
         }
     }
 }
