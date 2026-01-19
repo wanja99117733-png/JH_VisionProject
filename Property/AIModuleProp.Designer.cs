@@ -1,6 +1,6 @@
 ﻿namespace JH_VisionProject.Property
 {
-    partial class AImodelProp
+    partial class AIModelProp
     {
         /// <summary> 
         /// 필수 디자이너 변수입니다.

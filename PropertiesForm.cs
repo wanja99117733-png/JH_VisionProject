@@ -85,7 +85,7 @@ namespace JH_VisionProject
                     curProp = filterProp;
                     break;
                 case InspectType.InspAIModule:
-                    AImodelProp aiModuleProp = new AImodelProp();
+                    AIModelProp aiModuleProp = new AIModelProp();
                     curProp = aiModuleProp;
                     break;
                 default:

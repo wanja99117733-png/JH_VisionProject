@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Common.Util.Helpers;
 using JH_VisionProject.Grab;
+using JH_VisionProject.Sequence;
 
 namespace JH_VisionProject.Setting
 {
@@ -86,8 +87,13 @@ namespace JH_VisionProject.Setting
 
         public CameraType CamType { get; set; } = CameraType.WebCam;
 
+        public long ExposureTime { get; set; } = 15000; //단위: us
 
         //#15_INSP_WORKER#1 연속 검사 모드
         public bool CycleMode { get; set; } = false;
+
+        //#19_VISION_SEQUENCE#1 통신타입, IP 설정
+        public CommunicatorType CommType { get; set; }
+        public string CommIP { get; set; } = "127.0.0.1";
     }
 }

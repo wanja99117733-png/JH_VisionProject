@@ -56,6 +56,9 @@
     <Reference Include="log4net">
       <HintPath>..\..\프로젝트 참조\ExternalLib\Dll\Log4Net\log4net.dll</HintPath>
     </Reference>
+    <Reference Include="MessagingLibrary">
+      <HintPath>..\..\프로젝트 참조\ExternalLib\Dll\MessagingLibrary\MessagingLibrary.dll</HintPath>
+    </Reference>
     <Reference Include="MvCameraControl.Net">
       <HintPath>..\..\프로젝트 참조\ExternalLib\Dll\HikRobot\MvCameraControl.Net.dll</HintPath>
     </Reference>
@@ -80,6 +83,7 @@
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
+    <Reference Include="System.ServiceModel" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -104,6 +108,8 @@
     <Compile Include="Inspect\InspectBoard.cs" />
     <Compile Include="Inspect\InspResult.cs" />
     <Compile Include="Inspect\InspWorker.cs" />
+    <Compile Include="Sequence\Communicator.cs" />
+    <Compile Include="Sequence\VisionSequence.cs" />
     <Compile Include="Setting\AutoFindROI.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -163,11 +169,11 @@
       <DependentUpon>PropertiesForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Property\AImodelProp.cs">
+    <Compile Include="Property\AIModuleProp.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="Property\AImodelProp.Designer.cs">
-      <DependentUpon>AImodelProp.cs</DependentUpon>
+    <Compile Include="Property\AIModuleProp.Designer.cs">
+      <DependentUpon>AIModuleProp.cs</DependentUpon>
     </Compile>
     <Compile Include="Property\BinaryProp.cs">
       <SubType>UserControl</SubType>
@@ -204,6 +210,12 @@
     </Compile>
     <Compile Include="Setting\CameraSetting.Designer.cs">
       <DependentUpon>CameraSetting.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Setting\CommunicatorSetting.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Setting\CommunicatorSetting.Designer.cs">
+      <DependentUpon>CommunicatorSetting.cs</DependentUpon>
     </Compile>
     <Compile Include="Setting\SettingXml.cs" />
     <Compile Include="Setting\PathSetting.cs">
@@ -252,11 +264,11 @@
     <Compile Include="UIControl\RangeTrackbar.Designer.cs">
       <DependentUpon>RangeTrackbar.cs</DependentUpon>
     </Compile>
-    <Compile Include="Utill\BitmapExtension.cs" />
-    <Compile Include="Utill\ImageFIleSorter.cs" />
-    <Compile Include="Utill\ImageLoader.cs" />
-    <Compile Include="Utill\SLogger.cs" />
-    <Compile Include="Utill\XmlHelper.cs" />
+    <Compile Include="Util\BitmapExtension.cs" />
+    <Compile Include="Util\ImageFIleSorter.cs" />
+    <Compile Include="Util\ImageLoader.cs" />
+    <Compile Include="Util\SLogger.cs" />
+    <Compile Include="Util\XmlHelper.cs" />
     <EmbeddedResource Include="CameraForm.resx">
       <DependentUpon>CameraForm.cs</DependentUpon>
     </EmbeddedResource>
@@ -284,8 +296,8 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-    <EmbeddedResource Include="Property\AImodelProp.resx">
-      <DependentUpon>AImodelProp.cs</DependentUpon>
+    <EmbeddedResource Include="Property\AIModuleProp.resx">
+      <DependentUpon>AIModuleProp.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Property\BinaryProp.resx">
       <DependentUpon>BinaryProp.cs</DependentUpon>
@@ -310,6 +322,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Setting\CameraSetting.resx">
       <DependentUpon>CameraSetting.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Setting\CommunicatorSetting.resx">
+      <DependentUpon>CommunicatorSetting.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Setting\PathSetting.resx">
       <DependentUpon>PathSetting.cs</DependentUpon>

@@ -25,7 +25,7 @@ namespace JH_VisionProject
             string modelName = txtModelName.Text.Trim();
             if (modelName == "")
             {
-                MessageBox.Show("모델 이름을 입력하세요.");
+                MessageBox.Show("모덜 이름을 입력하세요.");
                 return;
             }
 

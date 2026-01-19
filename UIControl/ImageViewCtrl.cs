@@ -309,6 +309,7 @@ namespace JH_VisionProject.UIControl
 
         protected override void OnPaint(PaintEventArgs e)
         {
+
             base.OnPaint(e);
 
             if (_bitmapImage != null && Canvas != null)
@@ -450,7 +451,12 @@ namespace JH_VisionProject.UIControl
             // 이미지 좌표 → 화면 좌표 변환 후 사각형 그리기
             if (_rectInfos != null)
             {
-                foreach (DrawInspectInfo rectInfo in _rectInfos)
+                List<DrawInspectInfo> snapshot;
+                lock (_lock)
+                {
+                    snapshot = _rectInfos.ToList();  // 한 줄 추가: 복사본
+                }
+                foreach (DrawInspectInfo rectInfo in snapshot)
                 {
                     Color lineColor = Color.LightCoral;
                     if (rectInfo.decision == DecisionType.Defect)
@@ -540,6 +546,15 @@ namespace JH_VisionProject.UIControl
         {
             if (_rectInfos == null || _rectInfos.Count <= 0)
                 return;
+
+            List<DrawInspectInfo> snapshot;
+
+            // 기존 필드 _lock 이미 선언되어 있음
+            lock (_lock)
+            {
+                // 현재 리스트 내용을 그대로 복사
+                snapshot = _rectInfos.ToList();
+            }
 
             // 이미지 좌표 → 화면 좌표 변환 후 사각형 그리기
             foreach (DrawInspectInfo rectInfo in _rectInfos)
@@ -765,7 +780,12 @@ namespace JH_VisionProject.UIControl
         //#8_INSPECT_BINARY#17 화면에 보여줄 영역 정보를 표시하기 위해, 위치 입력 받는 함수
         public void AddRect(List<DrawInspectInfo> rectInfos)
         {
-            _rectInfos.AddRange(rectInfos);
+            if (rectInfos == null || rectInfos.Count == 0) return;
+
+            lock (_lock)
+            {
+                _rectInfos.AddRange(rectInfos);
+            }
             Invalidate();
         }
         public void SetInspResultCount(InspectResultCount inspectResultCount)
@@ -776,9 +796,12 @@ namespace JH_VisionProject.UIControl
 
         public void ResetEntity()
         {
-            _rectInfos.Clear();
-            _diagramEntityList.Clear();
-            _multiSelectedEntities.Clear();
+            lock (_lock)
+            {
+                _rectInfos.Clear();
+                _diagramEntityList.Clear();
+                _multiSelectedEntities.Clear();
+            }
             Invalidate();
         }
 

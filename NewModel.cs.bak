@@ -49,7 +49,7 @@ namespace JH_VisionProject
             
             string modelInfo = txtModelInfo.Text.Trim();
 
-            Global.Inst.InspStage.CurModel.CreateModel(modelName, modelInfo, saveDir);
+            Global.Inst.InspStage.CurModel.CreateModel(modelPath, modelName, modelInfo);
             Global.Inst.InspStage.CurModel.Save();
             this.Close();
         }

@@ -166,6 +166,8 @@ namespace JH_VisionProject.Property
             //#8_INSPECT_BINARY#11 이진화 검사 관련 속성값 적용
             cbBinMethod.SelectedIndex = (int)_blobAlgo.BinMethod;
 
+            cbChannel.SelectedIndex  = (int)_blobAlgo.ImageChannel - 1;
+
             UpdateDataGridView(true);
             chkRotatedRect.Checked = _blobAlgo.UseRotatedRect;
         }

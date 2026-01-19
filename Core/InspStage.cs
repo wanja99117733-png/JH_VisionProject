@@ -19,6 +19,7 @@ using System.IO;
 using JH_VisionProject.Utill;
 using System.Windows.Forms;
 using Microsoft.Win32;
+using JH_VisionProject.Sequence;
 
 namespace JH_VisionProject.Core
 {
@@ -59,8 +60,15 @@ namespace JH_VisionProject.Core
 
         public bool UseCamera { get; set; } = false;
 
+        public bool SaveCamImage { get; set; } = false;
+        public int SaveImageIndex { get; set; } = 0;
+
+        private string _capturePath = "";
+
         private string _lotNumber;
         private string _serialID;
+
+        private bool _isInspectMode = false;
 
         public InspStage() { }
         public ImageSpace ImageSpace
@@ -104,6 +112,8 @@ namespace JH_VisionProject.Core
 
         public bool Initialize()
         {
+            LoadSetting();
+
             SLogger.Write("InspStage 초기화!");
             _imageSpace = new ImageSpace();
 
@@ -119,6 +129,8 @@ namespace JH_VisionProject.Core
 
             //#10_INSPWINDOW#10 모델 인스턴스 생성
             _model = new Model();
+
+            LoadSetting();
 
             switch (_camType)
             {
@@ -141,6 +153,10 @@ namespace JH_VisionProject.Core
 
                 InitModelGrab(MAX_GRAB_BUF);
             }
+
+            //#19_VISION_SEQUENCE#3 VisionSequence 초기화
+            VisionSequence.Inst.InitSequence();
+            VisionSequence.Inst.SeqCommand += SeqCommand;
 
             //#16_LAST_MODELOPEN#5 마지막 모델 열기 여부 확인
             if (!LastestModelOpen())
@@ -484,6 +500,18 @@ namespace JH_VisionProject.Core
 
             _imageSpace.Split(bufferIndex);
 
+            if (SaveCamImage && Directory.Exists(_capturePath))
+            {
+                Mat curImage = GetMat(0, eImageChannel.Color);
+
+                if (curImage != null)
+                {
+                    string imageName = $"{++SaveImageIndex:D4}.png";
+                    string savePath = Path.Combine(_capturePath, imageName);
+                    curImage.SaveImage(savePath);
+                }
+            }
+
             DisplayGrabImage(bufferIndex);
 
             //#8_LIVE#2 LIVE 모드일때, Grab을 계속 실행하여, 반복되도록 구현
@@ -494,7 +522,10 @@ namespace JH_VisionProject.Core
                 await Task.Delay(10);  // 비동기 대기
                 _grabManager.Grab(bufferIndex, true);  // 다음 촬영 시작
             }
-        }   // await Task.Delay(10); 에서의 await는 async 함수내에서만 작동가능 이것을 해야지 병렬처리 하듯이 동시 작동이 됨
+
+            if (_isInspectMode)
+                RunInspect();
+        }
 
         private void DisplayGrabImage(int bufferIndex)
         {
@@ -707,6 +738,9 @@ namespace JH_VisionProject.Core
             if (_inspWorker != null)
                 _inspWorker.Stop();
 
+            //#19_VISION_SEQUENCE#4 시퀀스 정지
+            VisionSequence.Inst.StopAutoRun();
+            _isInspectMode = false;
             SetWorkingstate(WorkingState.NONE);
         }
 
@@ -728,6 +762,69 @@ namespace JH_VisionProject.Core
             return true;
         }
 
+        //#19_VISION_SEQUENCE#7 시퀀스 명령 처리
+        private void SeqCommand(object sender, SeqCmd seqCmd, object Param)
+        {
+            switch (seqCmd)
+            {
+                case SeqCmd.InspStart:
+                    {
+                        //#WCF_FSM#5 카메라 촬상 후, 검사 진행
+                        SLogger.Write("MMI : InspStart", SLogger.LogType.Info);
+
+                        //검사 시작
+                        string errMsg;
+
+                        if (UseCamera)
+                        {
+                            if (!Grab(0))
+                            {
+                                errMsg = string.Format("Failed to grab");
+                                SLogger.Write(errMsg, SLogger.LogType.Error);
+                            }
+                        }
+                        else
+                        {
+                            if (!VirtualGrab())
+                            {
+                                errMsg = string.Format("Failed to virtual grab");
+                                SLogger.Write(errMsg, SLogger.LogType.Error);
+                            }
+                        }
+                    }
+                    break;
+                case SeqCmd.InspEnd:
+                    {
+                        SLogger.Write("MMI : InspEnd", SLogger.LogType.Info);
+
+                        //모든 검사 종료
+                        string errMsg = "";
+
+                        //검사 완료에 대한 처리
+                        SLogger.Write("검사 종료");
+
+                        VisionSequence.Inst.VisionCommand(Vision2Mmi.InspEnd, errMsg);
+                    }
+                    break;
+            }
+        }
+
+        private void RunInspect()
+        {
+            ResetDisplay();
+
+            bool isDefect = false;
+            if (!_inspWorker.RunInspect(out isDefect))
+            {
+                string errMsg = string.Format("Failed to inspect");
+                SLogger.Write(errMsg, SLogger.LogType.Error);
+            }
+
+            //#WCF_FSM#6 비젼 -> 제어에 검사 완료 및 결과 전송
+            VisionSequence.Inst.VisionCommand(Vision2Mmi.InspDone, isDefect);
+        }
+
+
         //검사를 위한 준비 작업
         public bool InspectReady(string lotNumber, string serialID)
         {
@@ -747,6 +844,32 @@ namespace JH_VisionProject.Core
         public bool StartAutoRun()
         {
             SLogger.Write("Action : StartAutoRun");
+            
+            if (SaveCamImage && _model != null)
+            {
+                SaveImageIndex = 0;
+
+                _capturePath = Path.Combine(Path.GetDirectoryName(_model.ModelPath), "Capture");
+                if (!Directory.Exists(_capturePath))
+                {
+                    Directory.CreateDirectory(_capturePath);
+                }
+                else
+                {
+                    string[] files = Directory.GetFiles(_capturePath);
+                    foreach (string file in files)
+                    {
+                        try
+                        {
+                            File.Delete(file);
+                        }
+                        catch (Exception ex)
+                        {
+                            SLogger.Write($"Failed to delete file: {file}. Exception: {ex.Message}", SLogger.LogType.Error);
+                        }
+                    }
+                }
+            }
 
             string modelPath = CurModel.ModelPath;
             if (modelPath == "")
@@ -760,6 +883,11 @@ namespace JH_VisionProject.Core
             UseCamera = SettingXml.Inst.CamType != CameraType.None ? true : false;
 
             SetWorkingstate(WorkingState.INSPECT);
+
+            //#19_VISION_SEQUENCE#5 자동검사 시작
+            string modelName = Path.GetFileNameWithoutExtension(modelPath);
+            VisionSequence.Inst.StartAutoRun(modelName);
+            _isInspectMode = true;
 
             return true;
         }
@@ -779,6 +907,16 @@ namespace JH_VisionProject.Core
                 cameraForm.SetWorkingState(workingState);
             }
         }
+
+        public void SetExposure(long exposureTime)
+        {
+            if (_grabManager != null)
+            {
+                _grabManager.SetExposureTime(exposureTime);
+            }
+        }
+
+
         #region Disposable
 
         private bool disposed = false; // to detect redundant calls
@@ -790,6 +928,10 @@ namespace JH_VisionProject.Core
                 if (disposing)
                 {
                     // Dispose managed resources.
+
+                    //#19_VISION_SEQUENCE#6 시퀀스 이벤트 해제
+                    VisionSequence.Inst.SeqCommand -= SeqCommand;
+
                     if (_saigeAI != null)
                     {
                         _saigeAI.Dispose();

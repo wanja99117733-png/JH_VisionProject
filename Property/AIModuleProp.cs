@@ -13,13 +13,13 @@ using JH_VisionProject.Inspect;
 namespace JH_VisionProject.Property
 {
 
-    public partial class AImodelProp : UserControl
+    public partial class AIModelProp : UserControl
     {
         AIEngineType _engineType;
         string _modelPath = string.Empty;
         private SaigeAI _saigeAI = new SaigeAI();
 
-        public AImodelProp()
+        public AIModelProp()
         {
             InitializeComponent();
             
@@ -52,16 +52,16 @@ namespace JH_VisionProject.Property
             switch (selectedType)
             {
                 case AIEngineType.AnomalyDetection:
-                    filter = "Image Anormaly Detection Model (*.saigeiad)|*.saigeiad";
+                    filter = "Image Anormaly Detection Model (*.saigeiad)|*.saigeiad;";
                     break;
                 case AIEngineType.Segmentation:
-                    filter = "Segmentation Model (*.saigeseg)|*.saigeseg";
+                    filter = "Segmentation Model (*.saigeseg)|*.saigeseg;";
                     break;
                 case AIEngineType.Detection:
-                    filter = "Detection Model (*.saigedet)|*.saigedet";
+                    filter = "Detection Model (*.saigedet)|*.saigedet;";
                     break;
                 default:
-                    filter = "All Files (*.*)|*.*";
+                    filter = "All Files (*.*)|*.*;";
                     break;
             }
             using (OpenFileDialog openFileDialog = new OpenFileDialog())

@@ -431,7 +431,7 @@ namespace JH_VisionProject.Grab
         {
             if (_disposed)
                 return;
-
+            }
             if (disposing)
             {
                 if (_device != null)

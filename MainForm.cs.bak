@@ -26,8 +26,7 @@ namespace JH_VisionProject
         {
             InitializeComponent();
 
-            //#2_DOCKPANEL#2 DockPanel 초기화
-            _dockPanel = new DockPanel
+            _dockPanel = new DockPanel()    // 도킹패널 객체 생성
             {
                 Dock = DockStyle.Fill       // 도킹패널이 폼 전체를 채우도록 설정
             };
